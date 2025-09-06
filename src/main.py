@@ -223,6 +223,29 @@ def main(argv: Optional[list[str]] = None):
     action_handler.set_external_hardware(external_hardware)
     log.info("External hardware manager initialized and connected")
     
+    # Zynthian Hardware Integration
+    zynthian_integration = None
+    try:
+        from zynthian_integration import create_zynthian_integration
+        zynthian_integration = create_zynthian_integration(cfg.model_dump())
+        if zynthian_integration:
+            # Inject component references
+            zynthian_integration.set_components(
+                state=state,
+                sequencer=sequencer,
+                action_handler=action_handler,
+                external_hardware=external_hardware
+            )
+            # Log recommended MIDI configuration
+            recommended_midi = zynthian_integration.get_recommended_midi_config()
+            log.info(f"Zynthian recommended MIDI config: {recommended_midi}")
+            
+        log.info(f"Zynthian integration: {'enabled' if zynthian_integration else 'disabled'}")
+    except ImportError:
+        log.info("Zynthian integration not available (not running on Raspberry Pi)")
+    except Exception as e:
+        log.warning(f"Zynthian integration failed to initialize: {e}")
+    
     # Create mutation engine
     mutation_engine = create_mutation_engine(cfg.mutation, state)
     
@@ -257,6 +280,15 @@ def main(argv: Optional[list[str]] = None):
     # Connect idle manager to action handler and mutation engine
     action_handler.set_idle_manager(idle_manager)
     mutation_engine.set_idle_manager(idle_manager)
+    
+    # Complete Zynthian integration setup
+    if zynthian_integration:
+        zynthian_integration.set_components(
+            mutation_engine=mutation_engine,
+            idle_manager=idle_manager
+        )
+        zynthian_integration.start()
+        log.info("Zynthian hardware controls active")
 
     # Initialize note scheduler for proper note off timing
     note_scheduler = NoteScheduler(midi_output)
@@ -326,6 +358,8 @@ def main(argv: Optional[list[str]] = None):
             mutation_engine.stop()
             idle_manager.stop()
             external_hardware.stop()  # Stop external hardware manager
+            if zynthian_integration:
+                zynthian_integration.stop()  # Stop Zynthian hardware integration
             note_scheduler.stop()
             midi.close()
             if midi_output:

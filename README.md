@@ -338,6 +338,60 @@ mutation:
   max_changes_per_cycle: 2  # Max 2 parameters changed per mutation
 ```
 
+## Zynthian v4 Hardware Integration 🎛️
+
+The Mystery Melody Machine now supports **Zynthian v4 hardware** as a standalone platform, giving you physical control over key sequencer parameters without needing external MIDI controllers.
+
+### Hardware Control Mapping
+
+**Rotary Encoders** (with push-button reset):
+- **Encoder 0 (Layer)**: MIDI Input Channel (1-16) • *Push: Reset to 1*
+- **Encoder 1 (Back)**: MIDI Output Channel (1-16) • *Push: Reset to 1*  
+- **Encoder 2 (Select)**: CC Profile cycling • *Push: Reset to first*
+- **Encoder 3 (Learn)**: BPM adjustment (60-200) • *Push: Reset to 120*
+
+**Push Buttons**:
+- **S1**: Manual step trigger
+- **S2**: Toggle mutation engine on/off
+- **S3**: Reset sequence to beginning
+- **S4**: Toggle idle mode on/off
+
+### Quick Setup
+
+```bash
+# 1. Use Zynthian configuration
+make setup-zynthian
+
+# 2. Run with Zynthian hardware
+make run-zynthian
+
+# 3. Deploy to Zynthian Pi (on target device)
+make deploy-zynthian
+```
+
+### Zynthian Configuration
+
+```yaml
+zynthian:
+  enabled: true              # Enable hardware integration
+  encoder_sensitivity: 1     # Steps per encoder click
+  bpm_step: 5               # BPM change per encoder step
+  min_bpm: 60               # Minimum BPM value
+  max_bpm: 200              # Maximum BPM value
+
+midi:
+  input_port: "auto"        # Auto-detect Zynthian MIDI
+  output_port: "auto"       # Use built-in MIDI DIN
+```
+
+**Benefits**:
+- ✅ **No USB MIDI needed** - Uses built-in MIDI DIN connectors
+- ✅ **Real-time control** - Immediate response to hardware changes  
+- ✅ **Physical feedback** - Tactile control over key parameters
+- ✅ **Standalone operation** - No computer/external controller required
+
+See [docs/ZYNTHIAN_DEPLOYMENT.md](docs/ZYNTHIAN_DEPLOYMENT.md) for complete deployment guide.
+
 ## Usage Examples
 
 ### Setting Custom Step Probabilities

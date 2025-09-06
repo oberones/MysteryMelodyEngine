@@ -4,3 +4,4 @@ python-osc
 prometheus-client
 pyyaml
 pydantic
+RPi.GPIO; sys_platform == "linux"

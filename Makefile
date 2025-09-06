@@ -252,3 +252,62 @@ test-router: check-venv ## Test router module
 
 test-actions: check-venv ## Test action handler module
 	@cd $(PROJECT_ROOT) && PYTHONPATH=$(ENGINE_SRC) $(PYTEST) $(ENGINE_TESTS)/test_action_handler.py -v
+
+# Zynthian Hardware Integration Targets
+# ====================================
+
+run-zynthian: check-venv ## Run with Zynthian v4 hardware configuration
+	@echo "Starting Mystery Melody Machine with Zynthian v4 hardware integration..."
+	@if [ ! -f config.zynthian.yaml ]; then \
+		echo "Creating Zynthian configuration from example..."; \
+		cp examples/config.zynthian.example.yaml config.zynthian.yaml; \
+	fi
+	@cd $(PROJECT_ROOT) && PYTHONPATH=$(ENGINE_SRC) $(PYTHON) src/main.py --config config.zynthian.yaml
+
+setup-zynthian: check-venv ## Set up configuration for Zynthian v4 hardware
+	@echo "Setting up Zynthian v4 configuration..."
+	@if [ ! -f config.zynthian.yaml ]; then \
+		cp examples/config.zynthian.example.yaml config.zynthian.yaml; \
+		echo "Created config.zynthian.yaml from example"; \
+		echo "Edit config.zynthian.yaml to customize your setup"; \
+	else \
+		echo "config.zynthian.yaml already exists"; \
+	fi
+	@echo "Zynthian setup complete. Use 'make run-zynthian' to start."
+
+test-zynthian-hardware: check-venv ## Test Zynthian hardware detection (requires Pi)
+	@echo "Testing Zynthian hardware detection..."
+	@cd $(PROJECT_ROOT) && PYTHONPATH=$(ENGINE_SRC) $(PYTHON) -c \
+		"import sys; \
+		try: \
+			from src.zynthian_hardware import ZynthianHardwareInterface; \
+			hw = ZynthianHardwareInterface(); \
+			print('✓ Zynthian hardware interface available'); \
+			from src.zynthian_integration import ZynthianIntegrationManager; \
+			print('✓ Zynthian integration available'); \
+			print('Hardware test completed successfully'); \
+		except ImportError as e: \
+			print(f'⚠ Zynthian hardware not available: {e}'); \
+			print('This is normal when not running on Raspberry Pi'); \
+			sys.exit(0); \
+		except Exception as e: \
+			print(f'✗ Hardware test failed: {e}'); \
+			sys.exit(1)"
+
+deploy-zynthian: check-venv ## Deploy to Zynthian v4 hardware (use on target Pi)
+	@echo "Deploying Mystery Melody Machine to Zynthian v4..."
+	@echo "This should be run on the target Raspberry Pi with Zynthian hardware"
+	@# Check if we're on a Pi
+	@if [ ! -f /proc/device-tree/model ] || ! grep -q "Raspberry Pi" /proc/device-tree/model; then \
+		echo "⚠ Warning: This doesn't appear to be a Raspberry Pi"; \
+	fi
+	@# Set up Zynthian configuration
+	@$(MAKE) setup-zynthian
+	@# Test hardware
+	@$(MAKE) test-zynthian-hardware
+	@# Install systemd service
+	@echo "Installing systemd service..."
+	@sudo cp ansible/templates/mystery-music.service.j2 /etc/systemd/system/mystery-melody.service || echo "Service template not found, skipping"
+	@echo "Edit /etc/systemd/system/mystery-melody.service with correct paths"
+	@echo "Then run: sudo systemctl enable mystery-melody && sudo systemctl start mystery-melody"
+	@echo "Zynthian deployment preparation complete!"

@@ -60,6 +60,15 @@ class ApiConfig(BaseModel):
     enabled: bool = True
     port: int = 8080
 
+class ZynthianConfig(BaseModel):
+    """Zynthian v4 hardware integration configuration."""
+    enabled: bool = True
+    encoder_sensitivity: int = Field(1, ge=1, le=5)
+    bpm_step: int = Field(5, ge=1, le=20)
+    min_bpm: int = Field(60, ge=30, le=100)
+    max_bpm: int = Field(200, ge=150, le=300)
+    display_updates: bool = True
+
 class RootConfig(BaseModel):
     midi: MidiConfig = MidiConfig()
     mapping: Dict[str, Dict[str, str]] = Field(default_factory=dict)
@@ -70,6 +79,7 @@ class RootConfig(BaseModel):
     synth: SynthConfig = SynthConfig()
     logging: LoggingConfig = LoggingConfig()
     api: ApiConfig = ApiConfig()
+    zynthian: ZynthianConfig = ZynthianConfig()
     cc_profiles: Dict[str, Any] = Field(default_factory=dict)  # Custom CC profile definitions
 
     @field_validator("scales")

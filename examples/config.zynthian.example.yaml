@@ -1,0 +1,101 @@
+logging:
+  level: INFO
+
+# Zynthian v4 Hardware Integration Configuration
+zynthian:
+  enabled: true                    # Enable Zynthian hardware integration
+  encoder_sensitivity: 1           # Steps per encoder click (1-5)
+  bpm_step: 5                     # BPM change per encoder step
+  min_bpm: 60                     # Minimum BPM value
+  max_bpm: 200                    # Maximum BPM value  
+  display_updates: true           # Enable display feedback (future)
+
+midi:
+  # Zynthian v4 has built-in MIDI DIN connectors - use these for best performance
+  input_port: "auto"              # Will auto-detect Zynthian MIDI input
+  output_port: "auto"             # Will auto-detect Zynthian MIDI output
+  
+  input_channel: 1
+  output_channel: 1               # Start with channel 1, adjustable via encoder
+
+  clock:
+    enabled: true                 # Enable MIDI clock for external sync
+    send_start_stop: true
+    send_song_position: true
+
+  cc_profile:
+    active_profile: "roland_jx08" # Adjustable via Zynthian encoder
+    parameter_smoothing: true
+    cc_throttle_ms: 5             # Lower latency for hardware controls
+
+# Zynthian Hardware Control Mapping:
+# Encoder 0 (Layer): MIDI Input Channel (1-16)
+# Encoder 1 (Back): MIDI Output Channel (1-16)  
+# Encoder 2 (Select): CC Profile cycling
+# Encoder 3 (Learn): BPM adjustment (60-200)
+# Button S1: Manual step trigger
+# Button S2: Toggle mutation engine
+# Button S3: Reset sequence
+# Button S4: Toggle idle mode
+
+mapping:
+  # Keep existing MIDI mappings for external controllers
+  buttons:
+    "60-69": trigger_step
+  ccs:
+    "2": sequence_length
+    "27": tempo
+    "21": filter_cutoff
+    "22": filter_resonance
+    "23": eg_attack
+    "24": eg_release
+    "25": reverb_mix
+    "26": delay_mix
+
+sequencer:
+  steps: 8                        # Longer sequences work well with hardware control
+  bpm: 120                        # Default BPM (adjustable via Zynthian encoder)
+  swing: 0.1
+  density: .75
+  root_note: 60                   # C4
+  gate_length: 0.8
+  quantize_scale_changes: bar
+  step_pattern: all_on
+  direction_pattern: forward
+  voices: 2                       # Good for Zynthian's polyphonic capabilities
+
+scales:
+  - minor
+  - major
+  - pentatonic_minor
+  - pentatonic_major
+  - blues
+  - dorian
+  - mixolydian
+
+mutation:
+  interval_min_s: 45              # Longer intervals for live performance
+  interval_max_s: 90
+  max_changes_per_cycle: 3        # Subtle changes work well with hardware
+  
+  nts1_plugin:
+    style: "default"
+    replace_default_rules: false
+
+idle:
+  timeout_ms: 60000               # 1 minute timeout for live use
+  ambient_profile: meditative
+  fade_in_ms: 6000
+  fade_out_ms: 1500
+  smooth_bpm_transitions: true
+  bpm_transition_duration_s: 45
+
+# Synth backend configuration (for future use with Zynthian engines)
+synth:
+  backend: "supercollider"        # Current backend (future: integrate with Zynthian)
+  voices: 8
+
+# API for remote control/monitoring
+api:
+  enabled: true
+  port: 8080
