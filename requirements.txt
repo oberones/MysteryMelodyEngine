@@ -1,0 +1,6 @@
+mido
+python-rtmidi
+python-osc
+prometheus-client
+pyyaml
+pydantic

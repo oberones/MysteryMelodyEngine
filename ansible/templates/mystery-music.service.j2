@@ -1,0 +1,36 @@
+[Unit]
+Description=Mystery Music Engine - Interactive Generative Music Console
+After=network.target sound.target
+Wants=network.target
+
+[Service]
+Type=simple
+User={{ pi_user }}
+Group=audio
+WorkingDirectory={{ rpi_dir }}
+Environment=PATH={{ venv_dir }}/bin
+ExecStartPre=/bin/bash -c 'modprobe snd-seq || true'
+ExecStart={{ rpi_dir }}/start-mystery-music.sh
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/mystery-music/mystery-music.log
+StandardError=append:/var/log/mystery-music/mystery-music-error.log
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths={{ rpi_dir }} /var/log/mystery-music
+SupplementaryGroups=audio dialout plugdev
+
+# Resource limits
+LimitNOFILE=1024
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,89 @@
+#!/bin/bash
+# Health check script for Mystery Music Engine
+# This script checks if the service is running and MIDI devices are accessible
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV_DIR="$SCRIPT_DIR/.venv"
+SERVICE_NAME="mystery-music"
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+
+# Function to log with timestamp
+log() {
+    echo "[$TIMESTAMP] HEALTH: $1"
+}
+
+# Check if service is running
+if systemctl is-active --quiet "$SERVICE_NAME"; then
+    log "Service $SERVICE_NAME is running"
+    SERVICE_OK=true
+else
+    log "ERROR: Service $SERVICE_NAME is not running"
+    SERVICE_OK=false
+fi
+
+# Check if virtual environment exists
+if [ -d "$VENV_DIR" ]; then
+    log "Virtual environment exists"
+    VENV_OK=true
+else
+    log "ERROR: Virtual environment missing"
+    VENV_OK=false
+fi
+
+# Check MIDI devices (if service is running)
+if [ "$SERVICE_OK" = true ] && [ "$VENV_OK" = true ]; then
+    source "$VENV_DIR/bin/activate"
+    
+    MIDI_CHECK=$(python -c "
+import mido
+try:
+    inputs = mido.get_input_names()
+    outputs = mido.get_output_names()
+    print(f'OK:{len(inputs)}:{len(outputs)}')
+except Exception as e:
+    print(f'ERROR:{e}')
+" 2>&1)
+    
+    if [[ "$MIDI_CHECK" == OK:* ]]; then
+        IFS=':' read -ra PARTS <<< "$MIDI_CHECK"
+        INPUT_COUNT="${PARTS[1]}"
+        OUTPUT_COUNT="${PARTS[2]}"
+        log "MIDI devices accessible: $INPUT_COUNT inputs, $OUTPUT_COUNT outputs"
+        MIDI_OK=true
+    else
+        log "ERROR: MIDI check failed: $MIDI_CHECK"
+        MIDI_OK=false
+    fi
+else
+    log "Skipping MIDI check (service or venv not OK)"
+    MIDI_OK=false
+fi
+
+# Check log file size (prevent runaway logs)
+LOG_FILE="/var/log/mystery-music/mystery-music.log"
+if [ -f "$LOG_FILE" ]; then
+    LOG_SIZE=$(stat -f%z "$LOG_FILE" 2>/dev/null || stat -c%s "$LOG_FILE" 2>/dev/null || echo "0")
+    LOG_SIZE_MB=$((LOG_SIZE / 1024 / 1024))
+    
+    if [ "$LOG_SIZE_MB" -gt 100 ]; then
+        log "WARNING: Log file is large (${LOG_SIZE_MB}MB)"
+    else
+        log "Log file size OK (${LOG_SIZE_MB}MB)"
+    fi
+fi
+
+# Overall health status
+if [ "$SERVICE_OK" = true ] && [ "$VENV_OK" = true ] && [ "$MIDI_OK" = true ]; then
+    log "Overall status: HEALTHY"
+    exit 0
+else
+    log "Overall status: UNHEALTHY"
+    
+    # Attempt restart if service is the issue
+    if [ "$SERVICE_OK" = false ]; then
+        log "Attempting to restart service..."
+        systemctl restart "$SERVICE_NAME" || log "Failed to restart service"
+    fi
+    
+    exit 1
+fi

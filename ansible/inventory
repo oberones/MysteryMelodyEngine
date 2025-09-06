@@ -1,0 +1,23 @@
+# Ansible inventory file for Mystery Music Engine deployment
+# Copy this to 'inventory' and update with your Raspberry Pi details
+
+[raspberry_pi]
+# Replace with your Raspberry Pi's IP address or hostname
+mystery-pi ansible_host=raspberrypi.local ansible_user=oberon
+
+# Alternative examples:
+# mystery-pi-1 ansible_host=raspberrypi.local ansible_user=pi
+# mystery-pi-2 ansible_host=10.0.0.50 ansible_user=admin
+
+[raspberry_pi:vars]
+# SSH connection settings
+ansible_ssh_private_key_file=~/.ssh/id_rsa
+ansible_python_interpreter=/usr/bin/python3
+
+# Project-specific variables
+project_branch=main
+log_level=INFO
+
+# MIDI configuration (override in group_vars if needed)
+midi_input_port=auto
+midi_output_port=auto

@@ -1,0 +1,49 @@
+midi:
+  input_port: auto
+  output_port: auto  # Set to "auto" or specific port name to enable MIDI output
+  input_channel: 1
+  output_channel: 1
+mapping:
+  buttons:
+    "60-69": trigger_step
+  ccs:
+    "20": tempo
+    "21": filter_cutoff
+    "22": reverb_mix
+    "23": swing
+    "24": density
+    "25": master_volume
+    "50": sequence_length
+    "51": scale_select
+    "52": chaos_lock
+    "53": reserved
+    "60": mode
+    "61": palette
+    "62": drift
+sequencer:
+  steps: 8
+  bpm: 110
+  swing: 0.12
+  density: 0.85
+  quantize_scale_changes: bar
+scales:
+  - major
+  - minor
+  - pentatonic
+mutation:
+  interval_min_s: 120
+  interval_max_s: 240
+  max_changes_per_cycle: 2
+idle:
+  timeout_ms: 30000
+  ambient_profile: slow_fade
+  fade_in_ms: 4000
+  fade_out_ms: 800
+synth:
+  backend: supercollider
+  voices: 8
+logging:
+  level: INFO
+api:
+  enabled: true
+  port: 8080

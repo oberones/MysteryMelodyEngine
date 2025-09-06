@@ -1,0 +1,49 @@
+# Configuration Example: Song Mode
+
+# Basic configuration for song mode
+sequencer:
+  steps: 16               # Longer step sequences work well with songs
+  bpm: 120               # Moderate tempo for most song styles
+  swing: 0.1             # Slight swing for groove
+  density: 0.8           # Base density (sections will modify this)
+  root_note: 60          # C as root note (C4 = 60)
+  gate_length: 0.8       # Good note sustain
+  quantize_scale_changes: bar
+  step_pattern: syncopated        # Base pattern (song mode may override)
+  direction_pattern: song         # Enable song mode
+  voices: 3              # 3-voice harmony for rich composition
+
+# Scales suitable for song composition
+scales:
+  - major
+  - minor
+  - pentatonic_major
+  - pentatonic_minor
+  - blues
+  - dorian
+  - mixolydian
+
+# Other settings remain as needed for your setup
+midi:
+  input_port: "auto"
+  output_port: "auto"  
+  input_channel: 1
+  output_channel: 1
+
+# Mutation settings - song mode ignores most of these
+mutation:
+  interval_min_s: 120    # Longer intervals for song-length compositions
+  interval_max_s: 300    # Let songs complete before mutations
+  max_changes_per_cycle: 2
+
+# Idle settings
+idle:
+  timeout_ms: 180000     # 3 minutes - longer for song completion
+  ambient_profile: meditative
+  fade_in_ms: 4000
+  fade_out_ms: 800
+  smooth_bpm_transitions: true
+  bpm_transition_duration_s: 4.0
+
+logging:
+  level: INFO

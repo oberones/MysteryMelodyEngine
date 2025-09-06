@@ -1,0 +1,1107 @@
+	    KORG  NTS-1 mkII digital kit MIDI Implementation              Version 1.00 (2024.03.18)
+
+1.TRANSMITTED DATA
+
+1-1 CHANNEL MESSAGES            [H]:Hex,  [D]:Decimal
+
++--------+---------+-------------+----------------------------------------------------------------+
+| Status | Second  |   Third     |           Description                                          |
+| [Hex]  | [H] [D] | [H]   [D]   |                                                                |
++--------+---------+-------------+----------------------------------------------------------------+
+|   8n   | kk (kk) | 40    (64)  | Note Off                                                       |
+|   9n   | kk (kk) | vv    (vv)  | Note On  vv=1~127                                              |
+|   Bn   | 06 (06) | vv    (vv)  | DATA ENTRY (MSB)                                             *2|
+|   Bn   | 07 (07) | vv    (vv)  | MASTER VOLUME (MSB) vv=0~127                                   |
+|   Bn   | 0e (14) | vv    (vv)  | EG TYPE (vv=0,25,50,75,127)                                *1-1|
+|   Bn   | 10 (16) | vv    (vv)  | EG ATTACK (MSB) vv=0~127                                       |
+|   Bn   | 13 (19) | vv    (vv)  | EG RELEASE (MSB) vv=0~127                                      |
+|   Bn   | 14 (20) | vv    (vv)  | TREMOLO DEPTH (MSB) vv=0~127                                   |
+|   Bn   | 15 (21) | vv    (vv)  | TREMOLO RATE (MSB) vv=0~127                                    |
+|   Bn   | 18 (24) | vv    (vv)  | OSC LFO RATE (MSB) vv=0~127                                    |
+|   Bn   | 1a (26) | vv    (vv)  | OSC LFO DEPTH (MSB) vv=0~127                                   |
+|   Bn   | 1c (28) | vv    (vv)  | MOD A (MSB) vv=0~127                                           |
+|   Bn   | 1d (29) | vv    (vv)  | MOD B (MSB) vv=0~127                                           |
+|   Bn   | 1e (30) | vv    (vv)  | DELAY A (MSB) vv=0~127                                         |
+|   Bn   | 1f (31) | vv    (vv)  | DELAY B (MSB) vv=0~127                                         |
+|   Bn   | 21 (33) | vv    (vv)  | DELAY MIX (MSB) vv=0~127                                       |
+|   Bn   | 22 (34) | vv    (vv)  | REVERB A (MSB) vv=0~127                                        |
+|   Bn   | 23 (35) | vv    (vv)  | REVERB B (MSB) vv=0~127                                        |
+|   Bn   | 24 (36) | vv    (vv)  | REVERB MIX (MSB) vv=0~127                                      |
+|   Bn   | 26 (38) | vv    (vv)  | DATA ENTRY (LSB)                                             *2|
+|   Bn   | 27 (39) | vv    (vv)  | MASTER VOLUME (LSB) vv=0~127                                   |
+|   Bn   | 2a (42) | vv    (vv)  | FILTER TYPE (vv=0,18,36,54,72,90,127)                      *1-2|
+|   Bn   | 2b (43) | vv    (vv)  | FILTER CUTOFF (MSB) vv=0~127                                   |
+|   Bn   | 2c (44) | vv    (vv)  | FILTER RESONANCE (MSB) vv=0~127                                |
+|   Bn   | 2d (45) | vv    (vv)  | FILTER SWEEP DEPTH (MSB) vv=0~127                              |
+|   Bn   | 2e (46) | vv    (vv)  | FILTER SWEEP RATE (MSB) vv=0~127                               |
+|   Bn   | 30 (48) | vv    (vv)  | EG ATTACK (LSB) vv=0~127                                       |
+|   Bn   | 31 (49) | vv    (vv)  | EG RELEASE (LSB) vv=0~127                                      |
+|   Bn   | 32 (50) | vv    (vv)  | TREMOLO DEPTH (LSB) vv=0~127                                   |
+|   Bn   | 33 (51) | vv    (vv)  | TREMOLO RATE (LSB) vv=0~127                                    |
+|   Bn   | 35 (53) | vv    (vv)  | OSC TYPE (vv=0,18,36,54,72,90,127)                         *1-3|
+|   Bn   | 36 (54) | vv    (vv)  | OSC A (MSB) vv=0~127                                           |
+|   Bn   | 37 (55) | vv    (vv)  | OSC B (MSB) vv=0~127                                           |
+|   Bn   | 38 (56) | vv    (vv)  | OSC LFO RATE (LSB) vv=0~127                                    |
+|   Bn   | 3a (58) | vv    (vv)  | OSC LFO DEPTH (LSB) vv=0~127                                   |
+|   Bn   | 3c (60) | vv    (vv)  | MOD A (LSB) vv=0~127                                           |
+|   Bn   | 3d (61) | vv    (vv)  | MOD B (LSB) vv=0~127                                           |
+|   Bn   | 3e (62) | vv    (vv)  | DELAY A (LSB) vv=0~127                                         |
+|   Bn   | 3f (63) | vv    (vv)  | DELAY B (LSB) vv=0~127                                         |
+|   Bn   | 58 (88) | vv    (vv)  | MOD TYPE (vv=0,14,28,42,56,70,84,98,127)                   *1-4|
+|   Bn   | 59 (89) | vv    (vv)  | DELAY TYPE (vv=0,9,18,27,36,45,54,63,72,81,90,99,127)      *1-5|
+|   Bn   | 5a (90) | vv    (vv)  | REVERB TYPE (vv=0,11,22,33,44,55,66,77,88,99,127)          *1-6|
+|   Bn   | 62 (98) | vv    (vv)  | NRPN (LSB)                                                   *2|
+|   Bn   | 63 (99) | vv    (vv)  | NRPN (MSB)                                                   *2|
+|   Bn   | 66 (102)| vv    (vv)  | OSC A (LSB) vv=0~127                                           |
+|   Bn   | 67 (103)| vv    (vv)  | OSC B (LSB) vv=0~127                                           |
+|   Bn   | 6b (107)| vv    (vv)  | FILTER CUTOFF (LSB) vv=0~127                                   |
+|   Bn   | 6c (108)| vv    (vv)  | FILTER RESONANCE (LSB) vv=0~127                                |
+|   Bn   | 6d (109)| vv    (vv)  | FILTER SWEEP DEPTH (LSB) vv=0~127                              |
+|   Bn   | 6e (110)| vv    (vv)  | FILTER SWEEP RATE (LSB) vv=0~127                               |
+|   Bn   | 71 (113)| vv    (vv)  | DELAY MIX (LSB) vv=0~127                                       |
+|   Bn   | 72 (114)| vv    (vv)  | REVERB A (LSB) vv=0~127                                        |
+|   Bn   | 73 (115)| vv    (vv)  | REVERB B (LSB) vv=0~127                                        |
+|   Bn   | 74 (116)| vv    (vv)  | REVERB MIX (LSB) vv=0~127                                      |
+|   Bn   | 75 (117)| vv    (vv)  | ARP PATTERN (vv=0,12,24,36,48,60,72,84,96,127)             *1-7|
+|   Bn   | 76 (118)| vv    (vv)  | ARP INTERVALS (vv=0,21,42,63,84,127)                       *1-8|
+|   Bn   | 77 (119)| vv    (vv)  | ARP LENGTH (vv=0~127)                                          |
++--------+---------+-------------+----------------------------------------------------------------+
+
+ *1-1 : EG TYPE:ADSR, AHR, AR, AR LOOP, OPEN = vv:0,25,50,75,127
+ *1-2 : FILTER TYPE:LP2, LP4, BP2, BP4, HP2, HP4, OFF = vv:0,18,36,54,72,90,127
+ *1-3 : OSCILLATOR TYPE:OFF, SAW, TRI, SQR, VPM, NOISE, WAVES = vv:0,18,36,54,72,90,127
+ *1-4 : MOD TYPE:OFF, CHORUS, ENSEMBLE, PHASER, FLANGER, SOFT CLIP, HARD CLIP, SINE FOLD, FUZZ = vv:0,14,28,42,56,70,84,98,127
+ *1-5 : DELAY TYPE:OFF, STEREO, MONO, PING PONG, HIGHPASS, TAPE, ONE, STEREO BPM, MONO BPM, PING PONG BPM, HIGH BPM, TAPE BPM DOUBLING =
+           vv:0,9,18,27,36,45,54,63,72,81,90,99,127
+ *1-6 : REVERB TYPE:OFF, HALL, SMOOTH, ARENA, PLATE, ROOM, EARLY, SPACE, RISER, SUBMARINE, HORROR =
+           vv:0,11,22,33,44,55,66,77,88,99,127
+ *1-7 : ARP PATTERN:UP, DOWN, UP-DOWN, DOWN-UP, CONV, DIV, CONV-DIV, DIV-CONV, RAND, STOCH =
+           vv:0,12,24,36,48,60,72,84,96,127
+ *1-8 : ARP INTERVALS:OCT, MAJ, SUS, AUG, MIN, DIM = vv:0,21,42,63,84,127
+
+
+ *2 : Non Registered Parameter Number (NRPN)
++---------+-----------------------------+--------------------------+
+| MSB LSB |       Parameter             | Data Entry(MSB) Value    |
+| [H] [H] |                             |                          |
++---------+-----------------------------+--------------------------+
+|  0   0  | OSC EDIT PARAM1             | 0~16383             *2-1 |
+|  0   1  | OSC EDIT PARAM2             | 0~16383             *2-1 |
+|  0   2  | OSC EDIT PARAM3             | 0~16383             *2-1 |
+|  0   3  | OSC EDIT PARAM4             | 0~16383             *2-1 |
+|  0   4  | OSC EDIT PARAM5             | 0~16383             *2-1 |
+|  0   5  | OSC EDIT PARAM6             | 0~16383             *2-1 |
+|  0   6  | OSC EDIT PARAM7             | 0~16383             *2-1 |
+|  0   7  | OSC EDIT PARAM8             | 0~16383             *2-1 |
+|         |                             |                          |
+|  1   0  | MOD FX EDIT PARAM1          | 0~16383             *2-1 |
+|  1   1  | MOD FX EDIT PARAM2          | 0~16383             *2-1 |
+|  1   2  | MOD FX EDIT PARAM3          | 0~16383             *2-1 |
+|  1   3  | MOD FX EDIT PARAM4          | 0~16383             *2-1 |
+|  1   4  | MOD FX EDIT PARAM5          | 0~16383             *2-1 |
+|  1   5  | MOD FX EDIT PARAM6          | 0~16383             *2-1 |
+|  1   6  | MOD FX EDIT PARAM7          | 0~16383             *2-1 |
+|  1   7  | MOD FX EDIT PARAM8          | 0~16383             *2-1 |
+|         |                             |                          |
+|  2   0  | DELAY FX EDIT PARAM1        | 0~16383             *2-1 |
+|  2   1  | DELAY FX EDIT PARAM2        | 0~16383             *2-1 |
+|  2   2  | DELAY FX EDIT PARAM3        | 0~16383             *2-1 |
+|  2   3  | DELAY FX EDIT PARAM4        | 0~16383             *2-1 |
+|  2   4  | DELAY FX EDIT PARAM5        | 0~16383             *2-1 |
+|  2   5  | DELAY FX EDIT PARAM6        | 0~16383             *2-1 |
+|  2   6  | DELAY FX EDIT PARAM7        | 0~16383             *2-1 |
+|  2   7  | DELAY FX EDIT PARAM8        | 0~16383             *2-1 |
+|         |                             |                          |
+|  3   0  | REVERB FX EDIT PARAM1       | 0~16383             *2-1 |
+|  3   1  | REVERB FX EDIT PARAM2       | 0~16383             *2-1 |
+|  3   2  | REVERB FX EDIT PARAM3       | 0~16383             *2-1 |
+|  3   3  | REVERB FX EDIT PARAM4       | 0~16383             *2-1 |
+|  3   4  | REVERB FX EDIT PARAM5       | 0~16383             *2-1 |
+|  3   5  | REVERB FX EDIT PARAM6       | 0~16383             *2-1 |
+|  3   6  | REVERB FX EDIT PARAM7       | 0~16383             *2-1 |
+|  3   7  | REVERB FX EDIT PARAM8       | 0~16383             *2-1 |
++---------+-----------------------------+--------------------------+
+
+ *2-1 : When a 14 bit value is received the lower 7 bits are first expected via
+        a CC #38(0x26) message (or assumed 0), then the upper 7 bits are expected
+        via a CC #6(0x6) message.
+
+
+1-2 SYSTEM REALTIME MESSAGES
++-----------+---------------------------------------------+
+| Status[H] | Description                                 |
++-----------+---------------------------------------------+
+|    F8     | Timing Clock                                |
+|    FA     | Start                                       |
+|    FC     | Stop                                        |
+|    FE     | Active Sensing                              |
++-----------+---------------------------------------------+
+
+1-3 UNIVERSAL SYSTEM EXCLUSIVE MESSAGES
+
+ DEVICE INQUIRY REPLY
++---------+------------------------------------------------+
+| Byte[H] |                Description                     |
++---------+------------------------------------------------+
+|   F0    | Exclusive Status                               |
+|   7E    | Non Realtime Message                           |
+|   00    | MIDI Global Channel        ( Device ID )       |
+|   06    | General Information                            |
+|   02    | Identity Reply                                 |
+|   42    | KORG ID                    ( Manufacturers ID )|
+|   73    | NTS-1 digital kit mk II ID ( Family ID   (LSB))|
+|   01    |                            ( Family ID   (MSB))|
+|   01    |                            ( Member ID   (LSB))|
+|   00    |                            ( Member ID   (MSB))|
+|   xx    |                            ( Minor Ver.  (LSB))|
+|   xx    |                            ( Minor Ver.  (MSB))|
+|   xx    |                            ( Major Ver.  (LSB))|
+|   xx    |                            ( Major Ver.  (MSB))|
+|   F7    | END OF EXCLUSIVE                               |
++---------+------------------------------------------------+
+
+  This message is transmitted whenever an INQUIRY MESSAGE REQUEST is received.
+
+
+1-4 SYSTEM EXCLUSIVE MESSAGES
++-------------+-------------------------------------+------+
+| Function ID |    Description/Function             |      |
+|    [Hex]    |                                     |  *3  |
++-------------+-------------------------------------+------+
+|     40      | CURRENT PROGRAM DATA DUMP           | R    |
+|     51      | GLOBAL DATA DUMP                    | R    |
+|             |                                     |      |
+|     47      | USER API VERSION                    | R    |
+|     48      | USER MODULE INFO                    | R    |
+|     49      | USER SLOT STATUS                    | R    |
+|     4A      | USER SLOT DATA                      | R    |
+|             |                                     |      |
+|     7E      | CURRENT PROGRAM CHANGED             | C    |
+|             |                                     |      |
+|    23-2F    | STATUS (ACK/NAK)                    | E    |
++-------------+-------------------------------------+------+
+
+ *3 : Transmitted when
+      R  : Request message is received.
+      E  : Exclusive message is received.
+      C  : Current program is changed since last CURRENT PROGRAM DATA DUMP.
+
+
+1-5 SEARCH DEVICE REPLY
++---------+------------------------------------------------+
+| Byte[H] |                Description                     |
++---------+------------------------------------------------+
+|   F0    | Exclusive Status                               |
+|   42    | KORG ID                   ( Manufacturers ID ) |
+|   50    | Search Device                                  |
+|   01    | Reply                                          |
+|   0g    | g:MIDI Global Channel     ( Device ID )        |
+|   dd    | Echo Back ID                                   |
+|   73    | NTS-1 digital kit mkII ID ( Family ID   (LSB)) |
+|   01    |                           ( Family ID   (MSB)) |
+|   01    |                           ( Member ID   (LSB)) |
+|   00    |                           ( Member ID   (MSB)) |
+|   xx    |                           ( Minor Ver.  (LSB)) |
+|   xx    |                           ( Minor Ver.  (MSB)) |
+|   xx    |                           ( Major Ver.  (LSB)) |
+|   xx    |                           ( Major Ver.  (MSB)) |
+|   F7    | END OF EXCLUSIVE                               |
++---------+------------------------------------------------+
+
+  g : MIDI Channel = 0 ~ F :Global Channel
+  dd : Echo Back ID = copy from SEARCH DEVICE REQUEST message.
+
+  This message is transmitted whenever a SEARCH DEVICE REQUEST is received.
+  
+
+2.RECOGNIZED RECEIVE DATA
+
+2-1 CHANNEL MESSAGES
++--------+---------+-------------+----------------------------------------------------------------+
+| Status | Second  |   Third     |           Description                                          |
+| [Hex]  | [H] [D] | [H]   [D]   |                                                                |
++--------+---------+-------------+----------------------------------------------------------------+
+|   8n   | kk (kk) | vv    (vv)  | Note Off vv=1~127                                              |
+|   9n   | kk (kk) | 00    (00)  | Note Off                                                       |
+|   9n   | kk (kk) | vv    (vv)  | Note On  vv=1~127                                              |
+|   Bn   | 06 (06) | vv    (vv)  | DATA ENTRY (MSB)                                           *2*4|
+|   Bn   | 07 (07) | vv    (vv)  | MASTER VOLUME (MSB) vv=0~127                                 *4|
+|   Bn   | 0e (14) | vv    (vv)  | EG TYPE (vv=0,25,50,75,127)                              *4*5-1|
+|   Bn   | 10 (16) | vv    (vv)  | EG ATTACK (MSB) vv=0~127                                     *4|
+|   Bn   | 13 (19) | vv    (vv)  | EG RELEASE (MSB) vv=0~127                                    *4|
+|   Bn   | 14 (20) | vv    (vv)  | TREMOLO DEPTH (MSB) vv=0~127                                 *4|
+|   Bn   | 15 (21) | vv    (vv)  | TREMOLO RATE (MSB) vv=0~127                                  *4|
+|   Bn   | 18 (24) | vv    (vv)  | OSC LFO RATE (MSB) vv=0~127                                  *4|
+|   Bn   | 1a (26) | vv    (vv)  | OSC LFO DEPTH (MSB) vv=0~127                                 *4|
+|   Bn   | 1c (28) | vv    (vv)  | MOD A (MSB) vv=0~127                                         *4|
+|   Bn   | 1d (29) | vv    (vv)  | MOD B (MSB) vv=0~127                                         *4|
+|   Bn   | 1e (30) | vv    (vv)  | DELAY A (MSB) vv=0~127                                       *4|
+|   Bn   | 1f (31) | vv    (vv)  | DELAY B (MSB) vv=0~127                                       *4|
+|   Bn   | 21 (33) | vv    (vv)  | DELAY MIX (MSB) vv=0~127                                     *4|
+|   Bn   | 22 (34) | vv    (vv)  | REVERB A (MSB) vv=0~127                                      *4|
+|   Bn   | 23 (35) | vv    (vv)  | REVERB B (MSB) vv=0~127                                      *4|
+|   Bn   | 24 (36) | vv    (vv)  | REVERB MIX (MSB) vv=0~127                                    *4|
+|   Bn   | 26 (38) | vv    (vv)  | DATA ENTRY (LSB)                                           *2*4|
+|   Bn   | 27 (39) | vv    (vv)  | MASTER VOLUME (LSB) vv=0~127                                 *4|
+|   Bn   | 2a (42) | vv    (vv)  | FILTER TYPE (vv=0,18,36,54,72,90,127)                    *4*5-2|
+|   Bn   | 2b (43) | vv    (vv)  | FILTER CUTOFF (MSB) vv=0~127                                 *4|
+|   Bn   | 2c (44) | vv    (vv)  | FILTER RESONANCE (MSB) vv=0~127                              *4|
+|   Bn   | 2d (45) | vv    (vv)  | FILTER SWEEP DEPTH (MSB) vv=0~127                            *4|
+|   Bn   | 2e (46) | vv    (vv)  | FILTER SWEEP RATE (MSB) vv=0~127                             *4|
+|   Bn   | 30 (48) | vv    (vv)  | EG ATTACK (LSB) vv=0~127                                     *4|
+|   Bn   | 31 (49) | vv    (vv)  | EG RELEASE (LSB) vv=0~127                                    *4|
+|   Bn   | 32 (50) | vv    (vv)  | TREMOLO DEPTH (LSB) vv=0~127                                 *4|
+|   Bn   | 33 (51) | vv    (vv)  | TREMOLO RATE (LSB) vv=0~127                                  *4|
+|   Bn   | 35 (53) | vv    (vv)  | OSC TYPE (vv=0,18,36,54,72,90,127)                       *4*5-3|
+|   Bn   | 36 (54) | vv    (vv)  | OSC A (MSB) vv=0~127                                         *4|
+|   Bn   | 37 (55) | vv    (vv)  | OSC B (MSB) vv=0~127                                         *4|
+|   Bn   | 38 (56) | vv    (vv)  | OSC LFO RATE (LSB) vv=0~127                                  *4|
+|   Bn   | 3a (58) | vv    (vv)  | OSC LFO DEPTH (LSB) vv=0~127                                 *4|
+|   Bn   | 3c (60) | vv    (vv)  | MOD A (LSB) vv=0~127                                         *4|
+|   Bn   | 3d (61) | vv    (vv)  | MOD B (LSB) vv=0~127                                         *4|
+|   Bn   | 3e (62) | vv    (vv)  | DELAY A (LSB) vv=0~127                                       *4|
+|   Bn   | 3f (63) | vv    (vv)  | DELAY B (LSB) vv=0~127                                       *4|
+|   Bn   | 58 (88) | vv    (vv)  | MOD TYPE (vv=0,14,28,42,56,70,84,98,127)                 *4*5-4|
+|   Bn   | 59 (89) | vv    (vv)  | DELAY TYPE (vv=0,9,18,27,36,45,54,63,72,81,90,99,127)    *4*5-5|
+|   Bn   | 5a (90) | vv    (vv)  | REVERB TYPE (vv=0,11,22,33,44,55,66,77,88,99,127)        *4*5-6|
+|   Bn   | 62 (98) | vv    (vv)  | NRPN (LSB)                                                 *2*4|
+|   Bn   | 63 (99) | vv    (vv)  | NRPN (MSB)                                                 *2*4|
+|   Bn   | 66 (102)| vv    (vv)  | OSC A (LSB) vv=0~127                                         *4|
+|   Bn   | 67 (103)| vv    (vv)  | OSC B (LSB) vv=0~127                                         *4|
+|   Bn   | 6b (107)| vv    (vv)  | FILTER CUTOFF (LSB) vv=0~127                                 *4|
+|   Bn   | 6c (108)| vv    (vv)  | FILTER RESONANCE (LSB) vv=0~127                              *4|
+|   Bn   | 6d (109)| vv    (vv)  | FILTER SWEEP DEPTH (LSB) vv=0~127                            *4|
+|   Bn   | 6e (110)| vv    (vv)  | FILTER SWEEP RATE (LSB) vv=0~127                             *4|
+|   Bn   | 71 (113)| vv    (vv)  | DELAY MIX (LSB) vv=0~127                                     *4|
+|   Bn   | 72 (114)| vv    (vv)  | REVERB A (LSB) vv=0~127                                      *4|
+|   Bn   | 73 (115)| vv    (vv)  | REVERB B (LSB) vv=0~127                                      *4|
+|   Bn   | 74 (116)| vv    (vv)  | REVERB MIX (LSB) vv=0~127                                    *4|
+|   Bn   | 75 (117)| vv    (vv)  | ARP PATTERN (vv=0,12,24,36,48,60,72,84,96,127)           *4*5-7|
+|   Bn   | 76 (118)| vv    (vv)  | ARP INTERVALS (vv=0,21,42,63,84,127)                     *4*5-8|
+|   Bn   | 77 (119)| vv    (vv)  | ARP LENGTH (vv=0~127)                                        *4|
+|   Bn   | 7b (123)| 00    (00)  | All Note Off                                                 *4|
+|   En   | bb (bb) | bb    (bb)  | Pitch Bender Change                                          *4|
++--------+---------+-------------+----------------------------------------------------------------+
+
+ *4 : This message is recognized when the "MIDI RX/short message" global parameter is set to "1" (on).
+
+ *5-1 : EG TYPE:ADSR, AHR, AR, AR LOOP, OPEN = vv:0~24,25~49,50~74,75~99,100~127
+ *5-2 : FILTER TYPE:LP2, LP4, BP2, BP4, HP2, HP4, OFF = vv:0~17,18~35,36~53,54~71,72~89,90~107,108~127
+ *5-3 : OSCILLATOR TYPE:OFF, SAW, TRI, SQR, VPM, NOISE, WAVES = vv:0~17,18~35,36~53,54~71,72~89,90~106,107~127
+ *5-4 : MOD TYPE:OFF, CHORUS, ENSEMBLE, PHASER, FLANGER, SOFT CLIP, HARD CLIP, SINE FOLD, FUZZ =
+       	   vv:0~13,14~27,28~41,42~55,56~69,70~83,84~97,98~111,112~127
+ *5-5 : DELAY TYPE:OFF, STEREO, MONO, PING PONG, HIGHPASS, TAPE, ONE, STEREO BPM, MONO BPM, PING PONG BPM, HIGH BPM, TAPE BPM DOUBLING =
+       	   vv:0~8,9~17,18~26,27~35,36~44,45~53,54~62,63~71,72~80,81~89,90~98,99~107,108~127
+ *5-6 : REVERB TYPE:OFF, HALL, SMOOTH, ARENA, PLATE, ROOM, EARLY, SPACE, RISER, SUBMARINE, HORROR =
+       	   vv:0~10,11~21,22~32,33~43,44~54,55~65,66~76,77~87,88~98,99~109,110~127
+ *5-7 : ARP PATTERN:UP, DOWN, UP-DOWN, DOWN-UP, CONV, DIV, CONV-DIV, DIV-CONV, RAND, STOCH =
+           vv:0~11,12~23,24~35,36~47,48~59,60~71,72~83,84~95,96~107,108~127
+ *5-8 : ARP INTERVALS:OCT, MAJ, SUS, AUG, MIN, DIM = vv:0~20,21~41,42~62,63~83,84~104,105~127
+
+           
+2-2 SYSTEM REALTIME MESSAGES
++-----------+---------------------------------------------+
+| Status[H] | Description                                 |
++-----------+---------------------------------------------+
+|    F8     | Timing Clock                             *6 |
+|    FA     | Start                                    *6 |
+|    FB     | Continue                                 *6 |
+|    FC     | Stop                                     *6 |
+|    FE     | Active Sensing                              |
++-----------+---------------------------------------------+
+
+ *6 :This message is recognized when the "Clock" is set to "1" (Auto).
+
+
+2-3 UNIVERSAL SYSTEM EXCLUSIVE MESSAGE ( NON REALTIME )
+
+ DEVICE INQUIRY MESSAGE REQUEST
++---------+------------------------------------------------+
+| Byte[H] |    Description                                 |
++---------+------------------------------------------------+
+|   F0    | Exclusive Status                               |
+|   7E    | Non Realtime Message                           |
+|   nn    | MIDI Channel (Device ID)                       |
+|   06    | General Information                            |
+|   01    | Identity Request                               |
+|   F7    | END OF EXCLUSIVE                               |
++---------+------------------------------------------------+
+
+ nn : MIDI Channel = 0 ~ F :Global Channel
+                   = 7F    :Any Channel
+
+2-4 SYSTEM EXCLUSIVE MESSAGE
++-------------+--------------------------------------------+
+| Function ID |               Function                     |
+|    [Hex]    |                                            |
++-------------+--------------------------------------------+
+|     10      | CURRENT PROGRAM DATA DUMP REQUEST          |
+|     0E      | GLOBAL DATA DUMP REQUEST                   |
+|             |                                            |
+|     40      | CURRENT PROGRAM DATA DUMP                  |
+|     51      | GLOBAL DATA DUMP                           |
+|             |                                            |
+|     17      | USER API VERSION REQUEST                   |
+|     18      | USER MODULE INFO REQUEST                   |
+|     19      | USER SLOT STATUS REQUEST                   |
+|     1A      | USER SLOT DATA REQUEST                     |
+|     1B      | CLEAR USER SLOT                            |
+|     1D      | CLEAR USER MODULE                          |
+|     1E      | SWAP USER DATA                             |
+|             |                                            |
+|     47      | USER API VERSION                           |
+|     48      | USER MODULE INFO                           |
+|     49      | USER SLOT STATUS                           |
+|     4A      | USER SLOT DATA                             |
+|             |                                            |
++-------------+--------------------------------------------+
+
+2-5 SEARCH DEVICE REQUEST
++---------+------------------------------------------------+
+| Byte[H] |                Description                     |
++---------+------------------------------------------------+
+|   F0    | Exclusive Status                               |
+|   42    | KORG ID              ( Manufacturers ID )      |
+|   50    | Search Device                                  |
+|   00    | Request                                        |
+|   dd    | Echo Back ID                                   |
+|   F7    | END OF EXCLUSIVE                               |
++---------+------------------------------------------------+
+
+ When this message is received SEARCH DEVICE REPLY message
+ is transmitted with same Echo Back ID.
+
+MIDI EXCLUSIVE FORMAT   (R:Receive, T:Transmit)
+
+
+(1) CURRENT PROGRAM DATA DUMP REQUEST                               R
++----------------+--------------------------------------------------+
+|     Byte       |             Description                          |
++----------------+--------------------------------------------------+
+| F0,42,3g,      | EXCLUSIVE HEADER                                 |
+|    00,01,73    |                                                  |
+| 0001 0000 (10) | CURRENT PROGRAM DATA DUMP REQUEST      10H       |
+| 1111 0111 (F7) | EOX                                              |
++----------------+--------------------------------------------------+
+
+ Receive this message, and transmits Func=40 or Func=24 message.
+
+
+(2) GLOBAL DATA DUMP REQUEST                                        R
++----------------+--------------------------------------------------+
+|     Byte       |             Description                          |
++----------------+--------------------------------------------------+
+| F0,42,3g,      | EXCLUSIVE HEADER                                 |
+|    00,01,73    |                                                  |
+| 0000 1110 (0E) | GLOBAL DATA DUMP REQUEST               0EH       |
+| 1111 0111 (F7) | EOX                                              |
++----------------+--------------------------------------------------+
+
+ Receive this message, and transmits Func=51 or Func=24 message.
+
+
+(3) CURRENT PROGRAM DATA DUMP                                     R/T
++----------------+--------------------------------------------------+
+|     Byte       |             Description                          |
++----------------+--------------------------------------------------+
+| F0,42,3g,      | EXCLUSIVE HEADER                                 |
+|    00,01,73    |                                                  |
+| 0100 0000 (40) | CURRENT PROGRAM DATA DUMP              40H       |
+| 0ddd dddd (dd) | Data                                             |
+| 0ddd dddd (dd) |  :         Data Size         Conv. Size          |
+| 0ddd dddd (dd) |  :      576Bytes (7bit) -> 505Bytes (8bit)       |
+| 0ddd dddd (dd) |  :                                               |
+| 1111 0111 (F7) | EOX                        (See NOTE 1, TABLE 2) |
++----------------+--------------------------------------------------+
+
+ Receive this message & data, save them to Edit Buffer and transmits Func=23 or Func=24 message.
+ Receive Func=10 message, and transmits this message & data from Edit Buffer.
+ When "Program Dump" is executed, transmit this message & data from Edit Buffer.
+
+
+(4) GLOBAL DATA DUMP                                              R/T
++----------------+--------------------------------------------------+
+|     Byte       |             Description                          |
++----------------+--------------------------------------------------+
+| F0,42,3g,      | EXCLUSIVE HEADER                                 |
+|    00,01,73    |                                                  |
+| 0101 0001 (51) | GLOBAL DATA DUMP                       51H       |
+| 0ddd dddd (dd) | Data                                             |
+| 0ddd dddd (dd) |  :         Data Size         Conv. Size          |
+| 0ddd dddd (dd) |  :       37Bytes (7bit) -> 32Bytes (8bit)        |
+|     :          |  :                                               |
+| 1111 0111 (F7) | EOX                        (See NOTE 1, TABLE 1) |
++----------------+--------------------------------------------------+
+
+ Receive this message & data, save them to Internal Memory and transmits Func=23 or Func=24 message.
+ Receive Func=0E message, and transmits this message & data from Internal Memory.
+ When "All Dump" is executed, transmit this message & data from Internal Memory.
+
+
+(5) USER API VERSION REQUEST                                       R
++----------------+--------------------------------------------------+
+|     Byte       |             Description                          |
++----------------+--------------------------------------------------+
+| F0,42,3g,      | EXCLUSIVE HEADER                                 |
+|    00,01,73    |                                                  |
+| 0001 0111 (17) | USER API VERSION REQUEST               17H       |
+| 1111 0111 (F7) | EOX                                              |
++----------------+--------------------------------------------------+
+
+ When this message is received USER API VERSION is transmitted,
+ or STATUS (24) if busy.
+
+
+(6) USER MODULE INFO REQUEST                                       R
++----------------+--------------------------------------------------+
+|     Byte       |             Description                          |
++----------------+--------------------------------------------------+
+| F0,42,3g,      | EXCLUSIVE HEADER                                 |
+|    00,01,73    |                                                  |
+| 0001 1000 (18) | USER MODULE INFO REQUEST               18H       |
+| 0ddd dddd      | USER MODULE ID (modfx:1,delfx:2,revfx:3,osc:4)   |
+| 1111 0111 (F7) | EOX                                              |
++----------------+--------------------------------------------------+
+
+ When this message is received, USER MODULE INFO is transmitted,
+ or STATUS (24) if busy.
+
+
+(7) USER SLOT STATUS REQUEST                                       R
++----------------+--------------------------------------------------+
+|     Byte       |             Description                          |
++----------------+--------------------------------------------------+
+| F0,42,3g,      | EXCLUSIVE HEADER                                 |
+|    00,01,73    |                                                  |
+| 0001 1001 (19) | USER SLOT STATUS REQUEST               19H       |
+| 0ddd dddd      | USER MODULE ID (modfx:1,delfx:2,revfx:3,osc:4)   |
+| 0ddd dddd      | USER SLOT ID   (modfx/osc:0-15, delfx/revfx:0-7) |
+| 1111 0111 (F7) | EOX                                              |
++----------------+--------------------------------------------------+
+
+ When this message is received USER SLOT STATUS is transmitted,
+ or STATUS (24) if busy.
+
+
+(8) USER SLOT DATA REQUEST                                         R
++----------------+--------------------------------------------------+
+|     Byte       |             Description                          |
++----------------+--------------------------------------------------+
+| F0,42,3g,      | EXCLUSIVE HEADER                                 |
+|    00,01,73    |                                                  |
+| 0001 1010 (1A) | USER SLOT DATA REQUEST                 1AH       |
+| 0ddd dddd      | USER MODULE ID (modfx:1,delfx:2,revfx:3,osc:4)   |
+| 0ddd dddd      | USER SLOT ID   (modfx/osc:0-15, delfx/revfx:0-7) |
+| 1111 0111 (F7) | EOX                                              |
++----------------+--------------------------------------------------+
+
+ When this message is received USER SLOT DATA is transmitted,
+ or STATUS (24) if busy.
+
+
+(9) CLEAR USER SLOT                                                R
++----------------+--------------------------------------------------+
+|     Byte       |             Description                          |
++----------------+--------------------------------------------------+
+| F0,42,3g,      | EXCLUSIVE HEADER                                 |
+|    00,01,73    |                                                  |
+| 0001 1011 (1B) | CLEAR USER SLOT                        1BH       |
+| 0ddd dddd      | USER MODULE ID (modfx:1,delfx:2,revfx:3,osc:4)   |
+| 0ddd dddd      | USER SLOT ID   (modfx/osc:0-15, delfx/revfx:0-7) |
+| 1111 0111 (F7) | EOX                                              |
++----------------+--------------------------------------------------+
+
+ When this message is received the user API slot specified by USER MODULE ID
+ and USER SLOT ID is cleared, then STATUS is transmitted (see NOTE 2).
+ 
+
+(10) CLEAR USER MODULE                                              R
++----------------+--------------------------------------------------+
+|     Byte       |             Description                          |
++----------------+--------------------------------------------------+
+| F0,42,3g,      | EXCLUSIVE HEADER                                 |
+|    00,01,73    |                                                  |
+| 0001 1101 (1D) | CLEAR USER MODULE                      1DH       |
+| 0ddd dddd      | USER MODULE ID (modfx:1,delfx:2,revfx:3,osc:4)   |
+| 1111 0111 (F7) | EOX                                              |
++----------------+--------------------------------------------------+
+
+ When this message is received all user API slots for the specified
+ USER MODULE ID are cleared, then STATUS is transmitted (see NOTE 2).
+ 
+
+(11) SWAP USER DATA                                                 R
++----------------+--------------------------------------------------+
+|     Byte       |             Description                          |
++----------------+--------------------------------------------------+
+| F0,42,3g,      | EXCLUSIVE HEADER                                 |
+|    00,01,73    |                                                  |
+| 0001 1110 (1E) | SWAP USER DATA                         1EH       |
+| 0ddd dddd      | USER MODULE ID (modfx:1,delfx:2,revfx:3,osc:4)   |
+| 0ddd dddd      | USER SLOT ID   (modfx/osc:0-15, delfx/revfx:0-7) |
+| 0ddd dddd      | USER SLOT ID   (modfx/osc:0-15, delfx/revfx:0-7) |
+| 1111 0111 (F7) | EOX                                              |
++----------------+--------------------------------------------------+
+
+ When this message is received the data of the specified USER SLOT ID
+ of the specified USER MODULE ID is swapped, then STATUS is
+ transmitted (see NOTE 2).
+ 
+
+(12) USER API VERSION                                               T
++----------------+--------------------------------------------------+
+|     Byte       |             Description                          |
++----------------+--------------------------------------------------+
+| F0,42,3g,      | EXCLUSIVE HEADER                                 |
+|    00,01,73    |                                                  |
+| 0100 0111 (47) | USER API VERSION                       47H       |
+| 0000 1010 (dd) | PLATFORM ID          (NTS-1 digital kit mkII: 5) |
+| 0ddd dddd (dd) | MAJOR                           (0-99)           |
+| 0ddd dddd (dd) | MINOR                           (0-99)           |
+| 0ddd dddd (dd) | PATCH                           (0-99)           |
+| 1111 0111 (F7) | EOX                                              |
++----------------+--------------------------------------------------+
+
+ Transmitted after USER API VERSION REQUEST is received.
+
+
+(13) USER MODULE INFO                                               T
++----------------+--------------------------------------------------+
+|     Byte       |             Description                          |
++----------------+--------------------------------------------------+
+| F0,42,3g,      | EXCLUSIVE HEADER                                 |
+|    00,01,73    |                                                  |
+| 0100 1000 (48) | USER MODULE INFO                       48H       |
+| 0ddd dddd (dd) | Data1                                            |
+| 0ddd dddd (dd) | Data2                                            |
+| 0ddd dddd (dd) |  :         Data Size         Conv. Size          |
+| 0ddd dddd (dd) |  :       11Bytes (7bit) ->  9Bytes (8bit)        |
+|     :          |  :                                               |
+| 1111 0111 (F7) | EOX                        (see NOTE 1, TABLE 3) |
++----------------+--------------------------------------------------+
+
+ Transmitted after USER MODULE INFO REQUEST is received.
+ 
+
+(14) USER SLOT STATUS                                            R/T
++----------------+--------------------------------------------------+
+|     Byte       |             Description                          |
++----------------+--------------------------------------------------+
+| F0,42,3g,      | EXCLUSIVE HEADER                                 |
+|    00,01,73    |                                                  |
+| 0100 1001 (49) | USER SLOT STATUS                       49H       |
+| 0ddd dddd (dd) | USER MODULE ID (modfx:1,delfx:2,revfx:3,osc:4)   |
+| 0ddd dddd (dd) | USER SLOT ID   (modfx/osc:0-15, delfx/revfx:0-7) |
+| 0ddd dddd (dd) | Data1                                            |
+| 0ddd dddd (dd) | Data2                                            |
+| 0ddd dddd (dd) |  :         Data Size         Conv. Size          |
+| 0ddd dddd (dd) |  :       37Bytes (7bit) -> 32Bytes (8bit)        |
+|     :          |  :                                               |
+| 1111 0111 (F7) | EOX                        (see NOTE 1, TABLE 4) |
++----------------+--------------------------------------------------+
+
+ When this message is received, the data is saved to the specified
+ module's slot, then STATUS is transmitted (see NOTE 2).
+ 
+ This message is transmitted after USER SLOT STATUS REQUEST is received.
+ 
+
+(15) USER SLOT DATA                                              R/T
++----------------+--------------------------------------------------+
+|     Byte       |             Description                          |
++----------------+--------------------------------------------------+
+| F0,42,3g,      | EXCLUSIVE HEADER                                 |
+|    00,01,73    |                                                  |
+| 0100 1010 (4A) | USER SLOT DATA                         4AH       |
+| 0ddd dddd (dd) | Data1                                            |
+| 0ddd dddd (dd) | Data2                                            |
+| 0ddd dddd (dd) |  :         Data Size         Conv. Size          |
+| 0ddd dddd (dd) |  :     Variable (7bit) -> Variable (8bit)        |
+|     :          |  :                                               |
+| 1111 0111 (F7) | EOX                        (see NOTE 1, TABLE 5) |
++----------------+--------------------------------------------------+
+
+ When this message is received, the data is saved to the specified
+ module's slot, then then STATUS is transmitted (see NOTE 2).
+ 
+ This message is transmitted after USER SLOT DATA REQUEST is received.
+ 
+
+(16) STATUS (ACK/NAK)                                              T
++----------------+--------------------------------------------------+
+|     Byte       |             Description                          |
++----------------+--------------------------------------------------+
+| F0,42,3g,      | EXCLUSIVE HEADER                                 |
+|    00,01,73    |                                                  |
+| 0010 xxxx (2x) | STATUS (see NOTE 2)                    2xH       |
+| 1111 0111 (F7) | EOX                                              |
++----------------+--------------------------------------------------+
+
+ Transmitted when an error occurs after receiving a system exclusive message.
+
+
+ NOTE 1: 7 bit data format conversion 
+
+   DATA ( 1Set = 8bit x 7Byte )
+   b7     ~      b0   b7     ~      b0   b7   ~~    b0   b7     ~      b0
+   +-+-+-+-+-+-+-+-+  +-+-+-+-+-+-+-+-+  +-+-+-~~-+-+-+  +-+-+-+-+-+-+-+-+
+   | | | | | | | | |  | | | | | | | | |  | | |    | | |  | | | | | | | | |
+   +-+-+-+-+-+-+-+-+  +-+-+-+-+-+-+-+-+  +-+-+-~~-+-+-+  +-+-+-+-+-+-+-+-+
+         7n+0               7n+1          7n+2 ~~ 7n+5         7n+6
+
+    MIDI DATA ( 1Set = 7bit x 8Byte )
+      b7b7b7b7b7b7b7     b6    ~     b0     b6 ~~    b0     b6    ~     b0
+   +-+-+-+-+-+-+-+-+  +-+-+-+-+-+-+-+-+  +-+-+-~~-+-+-+  +-+-+-+-+-+-+-+-+
+   |0| | | | | | | |  |0| | | | | | | |  |0| |    | | |  |0| | | | | | | |
+   +-+-+-+-+-+-+-+-+  +-+-+-+-+-+-+-+-+  +-+-+-~~-+-+-+  +-+-+-+-+-+-+-+-+
+   7n+6,5,4,3,2,1,0         7n+0          7n+1 ~~ 7n+5         7n+6
+
+ NOTE 2: error status
+  
+      STATUS          INTERPRETATION     TYPE
+ ----------------+----------------------+------
+  0010 0011 (23) | OPERATION COMPLETED  |  ACK
+  0010 0100 (24) | OPERATION ERROR      |  NAK
+  0010 0110 (26) | DATA FORMAT ERROR    |  NAK
+  0010 0111 (27) | USER DATA SIZE ERROR |  NAK
+  0010 1000 (28) | USER DATA CRC ERROR  |  NAK
+  0010 1001 (29) | USER TARGET ERROR    |  NAK
+  0010 1010 (2A) | USER API ERROR       |  NAK
+  0010 1011 (2B) | USER LOAD SIZE ERROR |  NAK
+  0010 1100 (2C) | USER MODULE ERROR    |  NAK
+  0010 1101 (2D) | USER SLOT ERROR      |  NAK
+  0010 1110 (2E) | USER FORMAT ERROR    |  NAK
+  0010 1111 (2F) | USER INTERNAL ERROR  |  NAK
+
+
+TABLE 1 : GLOBAL PARAMETER
++-------+-------+---------+-----------------------------------------+
+| Offset|  Bit  |  Range  |  Description                            |
++-------+-------+---------+-----------------------------------------+
+|  0~3  |       | ASCII   |  'GLOB'                                 |
++-------+-------+---------+-----------------------------------------+
+|   4   |       |   0~7   |  Input Route                   *note G1 |
++-------+-------+---------+-----------------------------------------+
+|   5   |       |   0,1   |  Input Route Cut             0,1=Off,On |
++-------+-------+---------+-----------------------------------------+
+|   6   |       |   0~15  |  Input Gain                    *note G2 |
++-------+-------+---------+-----------------------------------------+
+|   7   |       |   0,1   |  Monaural              0,1=Stereo, Mono |
++-------+-------+---------+-----------------------------------------+
+|   8   |       |   0,1   |  Sync Out Polarity        0,1=Rise,Fall |
++-------+-------+---------+-----------------------------------------+
+|   9   |       |   0,1   |  Sync In Polarity         0,1=Rise,Fall |
++-------+-------+---------+-----------------------------------------+
+|  10   |       |   0,1   |  Tempo Range           0,1=Narrow, Wide |
++-------+-------+---------+-----------------------------------------+
+|  11   |       |   0,1   |  Clock Source        0,1=Internal, Auto |
++-------+-------+---------+-----------------------------------------+
+|  12   |       |   0,1   |  MIDI Short Message          0,1=Off,On |
++-------+-------+---------+-----------------------------------------+
+|  13   |       |   0,1   |  MIDI NRPN Message           0,1=Off,On |
++-------+-------+---------+-----------------------------------------+
+|  14   |       |   0,1   |  MIDI Route            0,1=USB+MIDI,USB |
++-------+-------+---------+-----------------------------------------+
+|  15   |       |   0~15  |  MIDI Ch                   0~15=1~16 Ch |
++-------+-------+---------+-----------------------------------------+
+|  16   |       |   0,1   |  Sync Step       0,1= 2step, every step |
++-------+-------+---------+-----------------------------------------+
+|  17   |       |   0,1   |  Legato Mode                 0,1=Off,On |
++-------+-------+---------+-----------------------------------------+
+|  18   |       |   0,1   |  Auto Power Off              0,1=Off,On |
++-------+-------+---------+-----------------------------------------+
+| 19~28 |       |         |  RESERVED                               |
++-------+-------+---------+-----------------------------------------+
+| 29~32 |       | ASCII   |  'GLED'                                 |
++-------+-------+---------+-----------------------------------------+
+
+*note G1 (Input Route)
+     0 : OSC mod
+     1 : before filter
+     2 : before eg
+     3 : before mod
+     4 : before delay
+     5 : before reverb
+     6 : before master
+     7 : after master
+
+*note G2 (Input Gain)
+     0 : -85dB
+     1 : -36dB
+     2 : -24dB
+     3 : -18dB
+     4 : -12dB
+     5 : -9dB
+     6 : -6dB
+     7 : -3dB
+     8 : -2dB
+     9 : -1dB
+    10 : 0dB
+    11 : 1dB
+    12 : 2dB
+    13 : 3dB
+    14 : 6dB
+    15 : 9dB
+     
+
+TABLE 2 : PROGRAM PARAMETER
++---------+-------+---------+---------------------------------------------+
+|  Offset |  Bit  |  Range  |  Description                                |
++---------+-------+---------+---------------------------------------------+
+|   0~3   |       |  ASCII  |  'PROG'                                     |
++---------+-------+---------+---------------------------------------------+
+|   4     | H:0~7 |         |  PROGRAM DATA FORMAT VERSION MAJOR          |
+|   5     | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   6     |  0~7  |         |  PROGRAM DATA FORMAT VERSION MINOR          |
+|   7     |  0~7  |         |  PROGRAM DATA FORMAT VERSION PATCH          |
++---------+-------+---------+---------------------------------------------+
+|   8~11  |       |         |  RESERVED                                   |
++---------+-------+---------+---------------------------------------------+
+|  12~27  |       |  ASCII  |  PROGRAM NAME [16]                 *note P1 |
++---------+-------+---------+---------------------------------------------+
+|  28~39  |       |         |  OSC SELECTION                     *note P9 |
++---------+-------+---------+---------------------------------------------+
+|  40~59  |       |  ASCII  |  OSC NAME [20]                     *note P1 |
++---------+-------+---------+---------------------------------------------+
+|   60    | H:0~7 |  0~1023 |  OSC A                                      |
+|   61    | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   62    | H:0~7 |  0~1023 |  OSC B                                      |
+|   63    | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   64    | H:0~7 |  0~1023 |  OSC LFO RATE                               |
+|   65    | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   66    | H:0~7 |  0~1023 |  OSC LFO DEPTH                              |
+|   67    | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|  68~71  |       |         |  RESERVED                                   |
++---------+-------+---------+---------------------------------------------+
+|   72    | H:0~7 |  0~1023 |  OSC PARAM 1                                |
+|   73    | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   74    | H:0~7 |  0~1023 |  OSC PARAM 2                                |
+|   75    | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   76    | H:0~7 |  0~1023 |  OSC PARAM 3                                |
+|   77    | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   78    | H:0~7 |  0~1023 |  OSC PARAM 4                                |
+|   79    | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   80    | H:0~7 |  0~1023 |  OSC PARAM 5                                |
+|   81    | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   82    | H:0~7 |  0~1023 |  OSC PARAM 6                                |
+|   83    | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   84    | H:0~7 |  0~1023 |  OSC PARAM 7                                |
+|   85    | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   86    | H:0~7 |  0~1023 |  OSC PARAM 8                                |
+|   87    | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   88    |       |   0~4   |  EG TYPE                           *note P2 |
++---------+-------+---------+---------------------------------------------+
+|   89    |       |         |  RESERVED                                   |
++---------+-------+---------+---------------------------------------------+
+|   90    | H:0~7 |  0~1023 |  EG ATTACK                                  |
+|   91    | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   92    | H:0~7 |  0~1023 |  EG RELEASE                                 |
+|   93    | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   94    | H:0~7 |  0~1023 |  TREMOLO RATE                               |
+|   95    | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   96    | H:0~7 |  0~1023 |  TREMOLO DEPTH                              |
+|   97    | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|  98~99  |       |         |  RESERVED                                   |
++---------+-------+---------+---------------------------------------------+
+|   100   |       |   0~6   |  FILTER TYPE                       *note P3 |
++---------+-------+---------+---------------------------------------------+
+|   101   |       |         |  RESERVED                                   |
++---------+-------+---------+---------------------------------------------+
+|   102   | H:0~7 |  0~1023 |  FILTER CUTOFF                              |
+|   103   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   104   | H:0~7 |  0~1023 |  FILTER RESONANCE                           |
+|   105   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   106   | H:0~7 |  0~1023 |  FILTER SWEEP RATE                          |
+|   107   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   108   | H:0~7 |  0~1023 |  FILTER SWEEP DEPTH                         |
+|   109   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+| 110~111 |       |         |  RESERVED                                   |
++---------+-------+---------+---------------------------------------------+
+| 112~123 |       |         |  MOD FX SELECTION                  *note P9 |
++---------+-------+---------+---------------------------------------------+
+| 124~143 |       |  ASCII  |  MOD FX NAME [20]                  *note P1 |
++---------+-------+---------+---------------------------------------------+
+|   144   | H:0~7 |  0~1023 |  MOD FX A                                   |
+|   145   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   146   | H:0~7 |  0~1023 |  MOD FX B                                   |
+|   147   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+| 148~151 |       |         |  RESERVED                                   |
++---------+-------+---------+---------------------------------------------+
+|   152   | H:0~7 |  0~1023 |  MOD FX PARAM 1                             |
+|   153   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   154   | H:0~7 |  0~1023 |  MOD FX PARAM 2                             |
+|   155   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   156   | H:0~7 |  0~1023 |  MOD FX PARAM 3                             |
+|   157   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   158   | H:0~7 |  0~1023 |  MOD FX PARAM 4                             |
+|   159   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   160   | H:0~7 |  0~1023 |  MOD FX PARAM 5                             |
+|   161   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   162   | H:0~7 |  0~1023 |  MOD FX PARAM 6                             |
+|   163   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   164   | H:0~7 |  0~1023 |  MOD FX PARAM 7                             |
+|   165   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   166   | H:0~7 |  0~1023 |  MOD FX PARAM 8                             |
+|   167   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+| 168~179 |       |         |  DELAY FX SELECTION                *note P9 |
++---------+-------+---------+---------------------------------------------+
+| 180~199 |       |  ASCII  |  DELAY FX NAME [20]                *note P1 |
++---------+-------+---------+---------------------------------------------+
+|   200   | H:0~7 |  0~1023 |  DELAY FX A                                 |
+|   201   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   202   | H:0~7 |  0~1023 |  DELAY FX B                                 |
+|   203   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   204   | H:0~7 |  0~1023 |  DELAY FX MIX                               |
+|   205   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+| 206~207 |       |         |  RESERVED                                   |
++---------+-------+---------+---------------------------------------------+
+|   208   | H:0~7 |  0~1023 |  DELAY FX PARAM 1                           |
+|   209   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   210   | H:0~7 |  0~1023 |  DELAY FX PARAM 2                           |
+|   211   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   212   | H:0~7 |  0~1023 |  DELAY FX PARAM 3                           |
+|   213   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   214   | H:0~7 |  0~1023 |  DELAY FX PARAM 4                           |
+|   215   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   216   | H:0~7 |  0~1023 |  DELAY FX PARAM 5                           |
+|   217   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   218   | H:0~7 |  0~1023 |  DELAY FX PARAM 6                           |
+|   219   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   220   | H:0~7 |  0~1023 |  DELAY FX PARAM 7                           |
+|   221   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   222   | H:0~7 |  0~1023 |  DELAY FX PARAM 8                           |
+|   223   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+| 224~235 |       |         |  REVERB FX SELECTION               *note P9 |
++---------+-------+---------+---------------------------------------------+
+| 236~255 |       |  ASCII  |  REVERB FX NAME [20]               *note P1 |
++---------+-------+---------+---------------------------------------------+
+|   256   | H:0~7 |  0~1023 |  REVERB FX A                                |
+|   257   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   258   | H:0~7 |  0~1023 |  REVERB FX B                                |
+|   259   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   260   | H:0~7 |  0~1023 |  REVERB FX MIX                              |
+|   261   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+| 262~263 |       |         |  RESERVED                                   |
++---------+-------+---------+---------------------------------------------+
+|   264   | H:0~7 |  0~1023 |  REVERB FX PARAM 1                          |
+|   265   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   266   | H:0~7 |  0~1023 |  REVERB FX PARAM 2                          |
+|   267   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   268   | H:0~7 |  0~1023 |  REVERB FX PARAM 3                          |
+|   269   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   270   | H:0~7 |  0~1023 |  REVERB FX PARAM 4                          |
+|   271   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   272   | H:0~7 |  0~1023 |  REVERB FX PARAM 5                          |
+|   273   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   274   | H:0~7 |  0~1023 |  REVERB FX PARAM 6                          |
+|   275   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   276   | H:0~7 |  0~1023 |  REVERB FX PARAM 7                          |
+|   278   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+|   279   | H:0~7 |  0~1023 |  REVERB FX PARAM 8                          |
+|   280   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+| 281~282 |       |   0~4   |  SEQ PLAY MODE                     *note P4 |
++---------+-------+---------+---------------------------------------------+
+| 283~284 |       |   0~17  |  SEQ TRANSPOSE                     *note P5 |
++---------+-------+---------+---------------------------------------------+
+|   285   | H:0~7 |  0~1023 |  SEQ GATE SCALE                             |
+|   286   | L:0~7 |         |                                             |
++---------+-------+---------+---------------------------------------------+
+| 287~288 |       |         |  RESERVED                                   |
++---------+-------+---------+---------------------------------------------+
+| 289~321 |       |         |  SEQ PATTERN [8]                   *note P6 |
++---------+-------+---------+---------------------------------------------+
+| 322~323 |       |   0~9   |  ARP PATTERN                       *note P7 |
++---------+-------+---------+---------------------------------------------+
+| 324~325 |       |   0~5   |  ARP INTERVALS                     *note P8 |
++---------+-------+---------+---------------------------------------------+
+| 326~327 |       |   1~24  |  ARP LENGTH                                 |
++---------+-------+---------+---------------------------------------------+
+| 328~500 |       |         |  RESERVED                                   |
++---------+-------+---------+---------------------------------------------+
+| 501~504 |       |  ASCII  |  'PRED'                                     |
++---------+-------+---------+---------------------------------------------+
+
+*note P1 (PROGRAM NAME)
+  32     : ' '
+  45     : '-'
+  48~57  : '0'~'9'
+  65~90  : 'A'~'Z'
+  95     : '_'
+  97~122 : 'a'~'z'
+
+*note P2 (EG TYPE)
+  0      : ADSR
+  1      : ASR
+  2      : AR
+  3      : AR LOOP
+  4      : OPEN
+
+*note P3 (FILTER TYPE)
+  0      : LP 2
+  1      : LP 4
+  2      : BP 2
+  3      : BP 4
+  4      : HP 2
+  5      : HP 4
+  6      : Thru
+
+*note P4 (SEQ PLAY MODE)
+  0      : Forward
+  1      : Reverse
+  2      : Bounce
+  3      : Stochastic
+  4      : Random
+
+*note P5 (SEQ TRANSPOSE)
+  0~17   : -8 ~ +9 (semitone)
+
+
+*note P6 (SEQ PATTERN)
++-------+-------+---------+----------------------------------------------+
+| Offset|  Bit  |  Range  |  Description                                 |
++-------+-------+---------+----------------------------------------------+
+|   0   |  0~3  |   1~3   | Seq State                  1~3=off,gate,rest |
+|   0   |  4~7  |         | Reserved                                     |
+|   1   |       |  0~127  | Note                                         |
+|   1   |       |  0~127  | Velocity                                     |
+|   2   |       |  0~100  | Length                                       |
++-------+-------+---------+----------------------------------------------+
+  
+
+*note P7 (ARP PATTERN)
+  0 : Up
+  1 : Down
+  2 : Up-Down
+  3 : Down-Up
+  4 : Converge
+  5 : Diverge
+  6 : Conv-Div
+  7 : Div-Conv
+  8 : Random
+  9 : Stochastic
+
+*note P8 (ARP INTERVALS)
+  0 : Octave
+  1 : Major Triad
+  2 : Suspended Triad
+  3 : Augmented Triad
+  4 : Minor Triad
+  5 : Diminished Triad
+
+
+*note P9 : SELECTION DATA
++-------+-------+---------+-------------------------------------------+
+| Offset|  Bit  |  Range  |  Description                              |
++-------+-------+---------+-------------------------------------------+
+|  0~3  |       | 0~2^32-1|  DEVELOPER ID (LITTLE ENDIAN)             |
++-------+-------+---------+-------------------------------------------+
+|  4~7  |       | 0~2^32-1|  UNIT ID (LITTLE ENDIAN)                  |
++-------+-------+---------+-------------------------------------------+
+|  8~9  |       |   0~99  |  UNIT VERSION MAJOR                       |
+|   10  |       |   0~99  |  UNIT VERSION MINOR                       |
+|   11  |       |   0~99  |  UNIT VERSION PATCH                       |
++-------+-------+---------+-------------------------------------------+
+
+
+
+TABLE 3 : USER MODULE INFO DATA
++-------+-------+---------+-------------------------------------------+
+| Offset|  Bit  |  Range  |  Description                              |
++-------+-------+---------+-------------------------------------------+
+|  0~3  |       | 0~2^32-1|  MAX PROGRAM STORAGE SIZE (LITTLE ENDIAN) |
++-------+-------+---------+-------------------------------------------+
+|  4~7  |       | 0~2^32-1|  MAX PROGRAM LOAD SIZE (LITTLE ENDIAN)    |
++-------+-------+---------+-------------------------------------------+
+|   8   |       |  0~255  |  AVAILABLE SLOT COUNT                     |
++-------+-------+---------+-------------------------------------------+
+
+
+TABLE 4 : USER SLOT STATUS DATA
++-------+-------+---------+-------------------------------------------+
+| Offset|  Bit  |  Range  |  Description                              |
++-------+-------+---------+-------------------------------------------+
+|   0   |       |    1    |  PLATFORM ID                              |
+|   1   |       |   1~5   |  MODULE ID                                |
++-------+-------+---------+-------------------------------------------+
+|   2   |       |   0~99  |  API VERSION MAJOR                        |
+|   3   |       |    0    |  RESERVED                                 |
+|   4   |       |   0~99  |  API VERSION MINOR                        |
+|   5   |       |   0~99  |  API VERSION PATCH                        |
++-------+-------+---------+-------------------------------------------+
+|  6~9  |       | 0~2^32-1|  DEVELOPER ID (LITTLE ENDIAN)             |
++-------+-------+---------+-------------------------------------------+
+| 10~13 |       | 0~2^32-1|  PROGRAM ID (LITTLE ENDIAN)               |
++-------+-------+---------+-------------------------------------------+
+|  14   |       |   0~99  |  PROGRAM VERSION MAJOR                    |
+|  15   |       |    0    |  RESERVED                                 |
+|  16   |       |   0~99  |  PROGRAM VERSION MINOR                    |
+|  17   |       |   0~99  |  PROGRAM VERSION PATCH                    |
++-------+-------+---------+-------------------------------------------+
+| 18-31 |       |  ASCII  |  PROGRAM NAME                             |
++-------+-------+---------+-------------------------------------------+
+
+
+TABLE 5 : USER SLOT DATA
++-------+-------+---------+-------------------------------------------+
+| Offset|  Bit  |  Range  |  Description                              |
++-------+-------+---------+-------------------------------------------+
+|  0~3  |       | 0~2^32-1|  PROGRAM DATA SIZE (LITTLE ENDIAN)        |
++-------+-------+---------+-------------------------------------------+
+|  4~7  |       | 0~2^32-1|  PROGRAM DATA CRC32 (LITTLE ENDIAN)       |
++-------+-------+---------+-------------------------------------------+
+|  8~x  |       |         |  PROGRAM DATA (PAYLOAD SIZE BYTES)        |
++-------+-------+---------+-------------------------------------------+
+

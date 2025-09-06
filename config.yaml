@@ -1,0 +1,80 @@
+logging:
+  level: INFO
+
+midi:
+  input_port: "auto"
+  output_port: "RK006 OUT_ALL"  # Set to "auto" or specific port name to enable MIDI output
+
+  input_channel: 1
+  output_channel: 12
+
+  clock:
+    enabled: false            # Enable MIDI clock output to sync external devices
+    send_start_stop: true     # Send MIDI start/stop messages  
+    send_song_position: true  # Send song position pointer messages
+
+  cc_profile:
+    active_profile: "roland_jx08" # Active CC profile (korg_nts1_mk2, roland_jx08, waldorf_streichfett, generic_analog, fm_synth)
+    parameter_smoothing: true       # Enable parameter smoothing for CC messages
+    cc_throttle_ms: 10              # Minimum milliseconds between CC messages (latency optimization)
+
+mapping:
+  buttons:
+    "60-69": trigger_step
+  ccs:
+    "2": sequence_length
+    "27": tempo
+    "21": filter_cutoff      # K1 -> NTS-1 Filter Cutoff (CC 43)
+    "22": filter_resonance   # K2 -> NTS-1 Filter Resonance (CC 44)
+    "23": eg_attack          # K3 -> NTS-1 EG Attack (CC 16)
+    "24": eg_release         # K4 -> NTS-1 EG Release (CC 19)
+    "25": reverb_mix         # K5 -> NTS-1 Reverb Mix (CC 36)
+    "26": delay_mix          # K6 -> NTS-1 Delay Mix (CC 33)
+    "50": osc_a              # Joystick Up -> NTS-1 OSC A (CC 54)
+    "51": osc_b              # Joystick Down -> NTS-1 OSC B (CC 55)
+    "52": mod_a              # Joystick Left -> NTS-1 MOD A (CC 28)
+    "53": mod_b              # Joystick Right -> NTS-1 MOD B (CC 29)
+    "60": osc_type           # S1 -> NTS-1 OSC Type (CC 53)
+    "61": filter_type        # S2 -> NTS-1 Filter Type (CC 42)
+    "62": mod_type           # S3 -> NTS-1 MOD Type (CC 88)
+
+sequencer:
+  steps: 4
+  bpm: 85
+  swing: 0.09
+  density: .86
+  root_note: 50            # MIDI note number for scale root (C4 = 60, C# = 61, D = 62, etc.)
+  gate_length: 1           # Note duration as fraction of step duration (0.1-1.0)
+  quantize_scale_changes: bar
+  step_pattern: all_on # syncopated | four_on_the_floor | all_on
+  direction_pattern: song # forward | backward | ping_pong | random | fugue | song
+  voices: 3                # Number of voices for fugue mode (1-4, where 1 = monophonic)
+
+
+scales:
+  - minor
+  - blues
+  - pentatonic_major
+  - pentatonic_minor
+  - mixolydian
+  - dorian
+  - locrian
+  - major
+
+mutation:
+  interval_min_s: 30
+  interval_max_s: 60
+  max_changes_per_cycle: 5
+  
+  # NTS-1 Plugin Configuration (auto-loaded when korg_nts1_mk2 profile is active)
+  nts1_plugin:
+    style: "default"              # Options: "default", "ambient", "rhythmic"
+    replace_default_rules: false   # Replace built-in rules with NTS-1 specific ones
+
+idle:
+  timeout_ms: 30000
+  ambient_profile: meditative # slow_fade | meditative
+  fade_in_ms: 4000
+  fade_out_ms: 800
+  smooth_bpm_transitions: true
+  bpm_transition_duration_s: 30

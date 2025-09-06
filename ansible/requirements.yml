@@ -1,0 +1,8 @@
+# Ansible requirements for Mystery Music Engine deployment
+# Install with: ansible-galaxy install -r requirements.yml
+
+# No external roles needed - using built-in modules only
+# This file is here for future expansion if external roles are needed
+
+collections:
+  - community.general  # For additional system modules if needed

@@ -1,0 +1,120 @@
+# Example configuration for using the NTS-1 mutation plugin
+# Copy relevant sections to your main config.yaml
+
+logging:
+  level: INFO
+
+midi:
+  input_port: "RK006 IN_ALL"
+  output_port: "RK006 OUT_ALL"
+  input_channel: 11
+  output_channel: 10
+
+  clock:
+    enabled: false
+    send_start_stop: true
+    send_song_position: true
+
+  cc_profile:
+    active_profile: "korg_nts1_mk2"  # Use the corrected NTS-1 profile
+    parameter_smoothing: true
+    cc_throttle_ms: 10
+
+# Map hardware controls to NTS-1 parameters for direct control
+mapping:
+  buttons:
+    "60-69": trigger_step
+  ccs:
+    # Hardware knobs control key NTS-1 parameters
+    "21": filter_cutoff      # K1 -> Filter Cutoff (CC 43)
+    "22": filter_resonance   # K2 -> Filter Resonance (CC 44)
+    "23": eg_attack          # K3 -> EG Attack (CC 16)
+    "24": eg_release         # K4 -> EG Release (CC 19)
+    "25": reverb_mix         # K5 -> Reverb Mix (CC 36)
+    "26": delay_mix          # K6 -> Delay Mix (CC 33)
+    
+    # Joystick controls
+    "50": osc_a              # Joystick Up -> OSC A (CC 54)
+    "51": osc_b              # Joystick Down -> OSC B (CC 55)
+    "52": mod_a              # Joystick Left -> MOD A (CC 28)
+    "53": mod_b              # Joystick Right -> MOD B (CC 29)
+    
+    # Switches for stepped parameters
+    "60": osc_type           # S1 -> OSC Type (CC 53)
+    "61": filter_type        # S2 -> Filter Type (CC 42)
+    "62": mod_type           # S3 -> MOD Type (CC 88)
+
+sequencer:
+  steps: 32
+  bpm: 120
+  swing: 0.12
+  density: 0.85
+  root_note: 60
+  gate_length: 0.8
+  quantize_scale_changes: bar
+  step_pattern: all_on
+  direction_pattern: forward
+
+scales:
+  - major
+  - minor
+  - pentatonic_major
+  - pentatonic_minor
+  - mixolydian
+  - blues
+  - dorian
+
+# Mutation settings optimized for NTS-1
+mutation:
+  interval_min_s: 45        # Slightly longer intervals for musical coherence
+  interval_max_s: 90        # Allow time for changes to be heard
+  max_changes_per_cycle: 4  # More changes since NTS-1 has many parameters
+  
+  # Plugin configuration
+  nts1_plugin:
+    enabled: true
+    style: "default"        # Options: "default", "ambient", "rhythmic"
+    replace_default_rules: true  # Replace built-in rules with NTS-1 specific ones
+
+# Idle mode configured for NTS-1 ambient sounds
+idle:
+  timeout_ms: 30000
+  ambient_profile: meditative
+  fade_in_ms: 6000          # Longer fade for ambient character
+  fade_out_ms: 2000
+  smooth_bpm_transitions: true
+  bpm_transition_duration_s: 8.0  # Slower transitions
+  
+  # NTS-1 specific idle settings
+  nts1_idle:
+    mutation_style: "ambient"    # Switch to ambient mutations in idle
+    reverb_boost: 20             # Add extra reverb when idle
+    filter_open: 15              # Open filter slightly when idle
+    slower_attack: 10            # Soften attacks when idle
+
+logging:
+  level: INFO
+
+api:
+  enabled: true
+  port: 8080
+
+# The corrected CC profile is now built into cc_profiles.py
+# but you can still override specific parameters here if needed
+cc_profiles:
+  # Example: Custom NTS-1 variant with different parameter mappings
+  my_nts1_custom:
+    name: "My Custom NTS-1 Setup"
+    description: "Custom NTS-1 mapping with preferred CC assignments"
+    parameters:
+      # Override specific parameters while keeping others from built-in profile
+      filter_cutoff:
+        cc: 43
+        range: [20, 127]        # Limit low end to avoid complete silence
+        curve: "exponential"
+        name: "Filter Cutoff (Limited)"
+      reverb_mix:
+        cc: 36
+        range: [0, 100]         # Limit reverb to avoid drowning the signal
+        curve: "linear"
+        name: "Reverb Mix (Limited)"

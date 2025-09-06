@@ -1,0 +1,227 @@
+---
+# Ansible playbook for setting up Mystery Music Engine on Raspberry Pi
+# Usage: ansible-playbook -i inventory setup-mystery-music.yml
+#
+# This playbook:
+# 1. Installs all system dependencies
+# 2. Sets up the project with virtual environment
+# 3. Configures systemd service for auto-start
+# 4. Sets up proper permissions and groups
+
+- name: Setup Mystery Music Engine on Raspberry Pi
+  hosts: raspberry_pi
+  become: yes
+  vars:
+    pi_user: "{{ ansible_user | default('oberon') }}"
+    pi_project: "/opt/MysteryMelodyMachine"
+    rpi_dir: "{{ pi_project }}/rpi-engine"
+    venv_dir: "{{ rpi_dir }}/.venv"
+    repo_url: "https://github.com/oberones/MysteryMelodyMachine.git"
+    python_version: "python3"
+    
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      tags: system
+
+    - name: Install system dependencies
+      apt:
+        name:
+          # Python and build tools
+          - python3
+          - python3-pip
+          - python3-venv
+          - python3-dev
+          - build-essential
+          - pkg-config
+          
+          # MIDI and audio libraries
+          - libportmidi-dev
+          - portaudio19-dev
+          - libasound2-dev
+          - alsa-utils
+          - libjack-jackd2-dev
+          
+          # System tools
+          - git
+          - curl
+          - wget
+          - htop
+          - vim
+          
+          # USB and hardware support
+          - usbutils
+        state: present
+      tags: system
+
+    - name: Load ALSA sequencer module
+      modprobe:
+        name: snd-seq
+        state: present
+      tags: system
+
+    - name: Ensure ALSA sequencer loads on boot
+      lineinfile:
+        path: /etc/modules
+        line: "snd-seq"
+        create: yes
+      tags: system
+
+    - name: Add user to required groups
+      user:
+        name: "{{ pi_user }}"
+        groups: audio,dialout,plugdev
+        append: yes
+      tags: system
+
+    - name: Create project directory
+      file:
+        path: "{{ pi_project }}"
+        state: directory
+        owner: "{{ pi_user }}"
+        group: "{{ pi_user }}"
+        mode: '0755'
+      tags: project
+
+    - name: Check if git repository exists
+      stat:
+        path: "{{ pi_project }}/.git"
+      register: git_repo
+      tags: project
+
+    - name: Clone repository
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ pi_project }}"
+        version: main
+      become_user: "{{ pi_user }}"
+      when: not git_repo.stat.exists
+      tags: project
+
+    - name: Update repository
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ pi_project }}"
+        version: main
+        force: yes
+      become_user: "{{ pi_user }}"
+      when: git_repo.stat.exists
+      tags: project
+
+    - name: Create Python virtual environment
+      command: "{{ python_version }} -m venv {{ venv_dir }}"
+      args:
+        creates: "{{ venv_dir }}/bin/activate"
+      become_user: "{{ pi_user }}"
+      tags: python
+
+    - name: Upgrade pip in virtual environment
+      pip:
+        name: pip
+        state: latest
+        virtualenv: "{{ venv_dir }}"
+      become_user: "{{ pi_user }}"
+      tags: python
+
+    - name: Install Python dependencies
+      pip:
+        requirements: "{{ rpi_dir }}/requirements.txt"
+        virtualenv: "{{ venv_dir }}"
+      become_user: "{{ pi_user }}"
+      tags: python
+
+    - name: Create config.yaml from template if it doesn't exist
+      copy:
+        src: "config.deploy.yaml"
+        dest: "{{ rpi_dir }}/config.production.yaml"
+        owner: "{{ pi_user }}"
+        group: "{{ pi_user }}"
+        mode: '0644'
+        force: no
+      become_user: "{{ pi_user }}"
+      tags: config
+
+    - name: Create systemd service file
+      template:
+        src: mystery-music.service.j2
+        dest: /etc/systemd/system/mystery-music.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify: reload systemd
+      tags: service
+
+    - name: Create startup script
+      template:
+        src: start-mystery-music.sh.j2
+        dest: "{{ rpi_dir }}/start-mystery-music.sh"
+        owner: "{{ pi_user }}"
+        group: "{{ pi_user }}"
+        mode: '0755'
+      become_user: "{{ pi_user }}"
+      tags: service
+
+    - name: Create log directory
+      file:
+        path: /var/log/mystery-music
+        state: directory
+        owner: "{{ pi_user }}"
+        group: "{{ pi_user }}"
+        mode: '0755'
+      tags: service
+
+    - name: Configure log rotation
+      copy:
+        dest: /etc/logrotate.d/mystery-music
+        content: |
+          /var/log/mystery-music/*.log {
+              daily
+              missingok
+              rotate 7
+              compress
+              delaycompress
+              notifempty
+              copytruncate
+              su {{ pi_user }} {{ pi_user }}
+          }
+        owner: root
+        group: root
+        mode: '0644'
+      tags: service
+
+    - name: Enable and start systemd service
+      systemd:
+        name: mystery-music
+        enabled: yes
+        state: started
+        daemon_reload: yes
+      tags: service
+
+    - name: Create health check script
+      template:
+        src: health-check.sh.j2
+        dest: "{{ rpi_dir }}/health-check.sh"
+        owner: "{{ pi_user }}"
+        group: "{{ pi_user }}"
+        mode: '0755'
+      tags: monitoring
+
+    - name: Set up health check cron job
+      cron:
+        name: "Mystery Music Health Check"
+        minute: "*/5"
+        job: "{{ rpi_dir }}/health-check.sh >> /var/log/mystery-music/health-check.log 2>&1"
+        user: "{{ pi_user }}"
+      tags: monitoring
+
+  handlers:
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: restart mystery-music
+      systemd:
+        name: mystery-music
+        state: restarted

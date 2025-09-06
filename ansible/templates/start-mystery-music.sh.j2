@@ -1,0 +1,74 @@
+#!/bin/bash
+# Startup script for Mystery Music Engine
+# This script ensures the virtual environment is activated and starts the engine
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV_DIR="$SCRIPT_DIR/.venv"
+CONFIG_FILE="$SCRIPT_DIR/config.production.yaml"
+LOG_DIR="/var/log/mystery-music"
+
+# Function to log with timestamp
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+}
+
+log "Starting Mystery Music Engine..."
+log "Script directory: $SCRIPT_DIR"
+log "Virtual environment: $VENV_DIR"
+log "Config file: $CONFIG_FILE"
+
+# Check if virtual environment exists
+if [ ! -d "$VENV_DIR" ]; then
+    log "ERROR: Virtual environment not found at $VENV_DIR"
+    exit 1
+fi
+
+# Check if config file exists, fallback to default
+if [ ! -f "$CONFIG_FILE" ]; then
+    log "Production config not found, using default config.yaml"
+    CONFIG_FILE="$SCRIPT_DIR/config.yaml"
+fi
+
+if [ ! -f "$CONFIG_FILE" ]; then
+    log "ERROR: No config file found"
+    exit 1
+fi
+
+# Activate virtual environment
+log "Activating virtual environment..."
+source "$VENV_DIR/bin/activate"
+
+# Verify Python packages
+log "Checking Python dependencies..."
+if ! python -c "import mido" 2>/dev/null; then
+    log "ERROR: mido not available, installing dependencies..."
+    pip install -r "$SCRIPT_DIR/requirements.txt"
+fi
+
+# Check MIDI devices
+log "Checking MIDI devices..."
+python -c "
+import mido
+inputs = mido.get_input_names()
+outputs = mido.get_output_names()
+print(f'Input ports: {inputs}')
+print(f'Output ports: {outputs}')
+" || log "WARNING: MIDI device check failed"
+
+# Change to project directory
+cd "$SCRIPT_DIR"
+
+# Start the engine
+log "Starting Mystery Music Engine..."
+log "Using config: $CONFIG_FILE"
+
+# Use robust MIDI handling by default on Raspberry Pi
+if [ -f "main_rpi.py" ]; then
+    log "Using Raspberry Pi optimized version"
+    exec python main_rpi.py --use-robust-midi --config "$CONFIG_FILE"
+else
+    log "Using standard version"
+    exec python src/main.py --config "$CONFIG_FILE"
+fi
