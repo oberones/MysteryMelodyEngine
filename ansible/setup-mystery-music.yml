@@ -13,10 +13,10 @@
   become: yes
   vars:
     pi_user: "{{ ansible_user | default('oberon') }}"
-    pi_project: "/opt/MysteryMelodyMachine"
-    rpi_dir: "{{ pi_project }}/rpi-engine"
+    pi_project: "/opt/MysteryMelodyEngine"
+    rpi_dir: "{{ pi_project }}"
     venv_dir: "{{ rpi_dir }}/.venv"
-    repo_url: "https://github.com/oberones/MysteryMelodyMachine.git"
+    repo_url: "https://github.com/oberones/MysteryMelodyEngine.git"
     python_version: "python3"
     
   tasks:
@@ -145,8 +145,8 @@
 
     - name: Create systemd service file
       template:
-        src: mystery-music.service.j2
-        dest: /etc/systemd/system/mystery-music.service
+        src: mystery-music-engine.service.j2
+        dest: /etc/systemd/system/mystery-music-engine.service
         owner: root
         group: root
         mode: '0644'
@@ -156,7 +156,7 @@
     - name: Create startup script
       template:
         src: start-mystery-music.sh.j2
-        dest: "{{ rpi_dir }}/start-mystery-music.sh"
+        dest: "{{ rpi_dir }}/start-mystery-music-engine.sh"
         owner: "{{ pi_user }}"
         group: "{{ pi_user }}"
         mode: '0755'
@@ -165,7 +165,7 @@
 
     - name: Create log directory
       file:
-        path: /var/log/mystery-music
+        path: /var/log/mystery-music-engine
         state: directory
         owner: "{{ pi_user }}"
         group: "{{ pi_user }}"
@@ -174,9 +174,9 @@
 
     - name: Configure log rotation
       copy:
-        dest: /etc/logrotate.d/mystery-music
+        dest: /etc/logrotate.d/mystery-music-engine
         content: |
-          /var/log/mystery-music/*.log {
+          /var/log/mystery-music-engine/*.log {
               daily
               missingok
               rotate 7
@@ -193,7 +193,7 @@
 
     - name: Enable and start systemd service
       systemd:
-        name: mystery-music
+        name: mystery-music-engine
         enabled: yes
         state: started
         daemon_reload: yes
@@ -210,9 +210,9 @@
 
     - name: Set up health check cron job
       cron:
-        name: "Mystery Music Health Check"
+        name: "Mystery Music Engine Health Check"
         minute: "*/5"
-        job: "{{ rpi_dir }}/health-check.sh >> /var/log/mystery-music/health-check.log 2>&1"
+        job: "{{ rpi_dir }}/health-check.sh >> /var/log/mystery-music-engine/health-check.log 2>&1"
         user: "{{ pi_user }}"
       tags: monitoring
 
@@ -223,5 +223,5 @@
 
     - name: restart mystery-music
       systemd:
-        name: mystery-music
+        name: mystery-music-engine
         state: restarted
