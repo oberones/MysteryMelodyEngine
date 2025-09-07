@@ -1,5 +1,5 @@
 [Unit]
-Description=Mystery Music Engine - Interactive Generative Music Console
+Description={{ service_description | default('Mystery Melody Machine') }}
 After=network.target sound.target
 Wants=network.target
 
@@ -17,20 +17,27 @@ KillSignal=SIGTERM
 TimeoutStopSec=30
 Restart=always
 RestartSec=10
-StandardOutput=append:/var/log/mystery-music/mystery-music.log
-StandardError=append:/var/log/mystery-music/mystery-music-error.log
+StandardOutput=append:/var/log/mystery-melody/mystery-melody.log
+StandardError=append:/var/log/mystery-melody/mystery-melody-error.log
 
-# Security settings
+# Security settings (relaxed for GPIO access on Zynthian)
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths={{ rpi_dir }} /var/log/mystery-music
-SupplementaryGroups=audio dialout plugdev
+ReadWritePaths={{ rpi_dir }} /var/log/mystery-melody {% if is_zynthian_hardware %}/dev/gpiomem /sys/class/gpio{% endif %}
 
-# Resource limits
-LimitNOFILE=1024
-MemoryMax=512M
+# Group permissions for hardware access
+SupplementaryGroups=audio,dialout,plugdev{% if is_zynthian_hardware %},gpio,i2c,spi{% endif %}
+
+# Resource limits (increased for Zynthian performance)
+LimitNOFILE=2048
+MemoryMax=1G
+{% if is_zynthian_hardware %}
+# Real-time scheduling for low-latency hardware response
+LimitRTPRIO=95
+LimitMEMLOCK=infinity
+{% endif %}
 
 [Install]
 WantedBy=multi-user.target

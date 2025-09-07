@@ -1,0 +1,284 @@
+---
+# Quick deployment playbook specifically for Zynthian v4 hardware
+# Usage: ansible-playbook -i inventory setup-zynthian.yml
+#
+# This playbook is optimized for Zynthian v4 hardware and includes:
+# - Zynthian-specific hardware configuration
+# - GPIO and interface setup
+# - Performance optimizations
+# - Hardware validation tests
+
+- name: Deploy Mystery Melody Machine to Zynthian v4 Hardware
+  hosts: zynthian_hardware
+  become: yes
+  vars:
+    # Force Zynthian configuration
+    is_zynthian_hardware: true
+    config_file: "config.zynthian.yaml"
+    service_description: "Mystery Melody Machine (Zynthian v4)"
+    pi_user: "{{ ansible_user | default('pi') }}"
+    pi_project: "/opt/MysteryMelodyEngine"
+    rpi_dir: "{{ pi_project }}/rpi-engine"
+    venv_dir: "{{ rpi_dir }}/.venv"
+    repo_url: "https://github.com/oberones/MysteryMelodyEngine.git"
+    python_version: "python3"
+    
+  pre_tasks:
+    - name: Verify Zynthian hardware deployment
+      debug:
+        msg: |
+          🎛️ Deploying to Zynthian v4 hardware
+          Target: {{ inventory_hostname }}
+          User: {{ pi_user }}
+          Config: {{ config_file }}
+    
+    - name: Check if running on Raspberry Pi
+      fail:
+        msg: "This playbook requires Raspberry Pi hardware"
+      when: ansible_facts['architecture'] != 'armv7l' and ansible_facts['architecture'] != 'aarch64'
+
+  # Include the main setup tasks inline
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      tags: system
+
+    - name: Install system dependencies (including Zynthian support)
+      apt:
+        name:
+          # Python and build tools
+          - python3
+          - python3-pip
+          - python3-venv
+          - python3-dev
+          - build-essential
+          - pkg-config
+          
+          # MIDI and audio libraries
+          - libportmidi-dev
+          - portaudio19-dev
+          - libasound2-dev
+          - alsa-utils
+          - libjack-jackd2-dev
+          
+          # Zynthian v4 hardware support
+          - python3-rpi.gpio
+          - wiringpi
+          - i2c-tools
+          - spi-tools
+          
+          # System tools
+          - git
+          - curl
+          - wget
+          - htop
+          - vim
+          - usbutils
+        state: present
+      tags: system
+
+    - name: Enable GPIO, I2C, and SPI interfaces for Zynthian hardware
+      lineinfile:
+        path: /boot/config.txt
+        line: "{{ item }}"
+        create: yes
+      loop:
+        - "dtparam=spi=on"
+        - "dtparam=i2c=on" 
+        - "dtparam=i2s=on"
+        # Zynthian v4 specific GPIO pull-ups for encoders and buttons
+        - "gpio=4,0,1,7,25,26,27,21,23,12,2,3=pu"
+      notify: reboot pi
+      tags: [system, zynthian]
+
+    - name: Add user to required groups (including GPIO for Zynthian)
+      user:
+        name: "{{ pi_user }}"
+        groups: audio,dialout,plugdev,gpio,i2c,spi
+        append: yes
+      tags: system
+
+    - name: Load ALSA sequencer module
+      modprobe:
+        name: snd-seq
+        state: present
+      tags: system
+
+    - name: Ensure ALSA sequencer loads on boot
+      lineinfile:
+        path: /etc/modules
+        line: "snd-seq"
+        create: yes
+      tags: system
+
+    - name: Create project directory
+      file:
+        path: "{{ pi_project }}"
+        state: directory
+        owner: "{{ pi_user }}"
+        group: "{{ pi_user }}"
+        mode: '0755'
+      tags: project
+
+    - name: Clone or update repository
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ pi_project }}"
+        version: zynthian_support
+        force: yes
+      become_user: "{{ pi_user }}"
+      tags: project
+
+    - name: Create Python virtual environment
+      command: "{{ python_version }} -m venv {{ venv_dir }}"
+      args:
+        creates: "{{ venv_dir }}/bin/activate"
+      become_user: "{{ pi_user }}"
+      tags: python
+
+    - name: Upgrade pip in virtual environment
+      pip:
+        name: pip
+        state: latest
+        virtualenv: "{{ venv_dir }}"
+      become_user: "{{ pi_user }}"
+      tags: python
+
+    - name: Install Python dependencies
+      pip:
+        requirements: "{{ rpi_dir }}/requirements.txt"
+        virtualenv: "{{ venv_dir }}"
+      become_user: "{{ pi_user }}"
+      tags: python
+
+    - name: Setup Zynthian configuration
+      command: "make setup-zynthian"
+      args:
+        chdir: "{{ rpi_dir }}"
+      become_user: "{{ pi_user }}"
+      tags: [config, zynthian]
+
+    - name: Create systemd service file
+      template:
+        src: mystery-music.service.j2
+        dest: /etc/systemd/system/mystery-melody.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify: reload systemd
+      tags: service
+
+    - name: Create startup script
+      template:
+        src: start-mystery-music.sh.j2
+        dest: "{{ rpi_dir }}/start-mystery-music.sh"
+        owner: "{{ pi_user }}"
+        group: "{{ pi_user }}"
+        mode: '0755'
+      become_user: "{{ pi_user }}"
+      tags: service
+
+    - name: Create log directory
+      file:
+        path: /var/log/mystery-melody
+        state: directory
+        owner: "{{ pi_user }}"
+        group: "{{ pi_user }}"
+        mode: '0755'
+      tags: service
+
+    - name: Enable and start systemd service
+      systemd:
+        name: mystery-melody
+        enabled: yes
+        state: started
+        daemon_reload: yes
+      tags: service
+
+    - name: Create Zynthian hardware status script
+      copy:
+        dest: "{{ rpi_dir }}/check-zynthian-hardware.sh"
+        content: |
+          #!/bin/bash
+          # Zynthian v4 Hardware Status Check
+          
+          echo "=== Zynthian Hardware Status ==="
+          echo "Date: $(date)"
+          echo
+          
+          # Check GPIO access
+          echo "GPIO Access:"
+          if [ -c /dev/gpiomem ]; then
+              echo "  ✓ /dev/gpiomem accessible"
+          else
+              echo "  ✗ /dev/gpiomem not accessible"
+          fi
+          
+          # Check user groups
+          echo "User Groups:"
+          groups {{ pi_user }} | grep -E "(gpio|audio|i2c|spi)" || echo "  ⚠ Missing required groups"
+          
+          # Check MIDI ports
+          echo "MIDI Ports:"
+          aconnect -l | grep -i "client\|port" || echo "  ⚠ No MIDI ports detected"
+          
+          # Test Zynthian integration
+          echo "Zynthian Integration Test:"
+          cd {{ rpi_dir }}
+          {{ venv_dir }}/bin/python debug/test_zynthian_hardware.py 2>&1 | tail -3
+          
+          echo "=== End Status Check ==="
+        owner: "{{ pi_user }}"
+        group: "{{ pi_user }}"
+        mode: '0755'
+      tags: [monitoring, zynthian]
+
+  post_tasks:
+    - name: Run Zynthian hardware validation
+      command: "{{ rpi_dir }}/check-zynthian-hardware.sh"
+      become_user: "{{ pi_user }}"
+      register: hardware_check
+      ignore_errors: yes
+
+    - name: Display hardware validation results
+      debug:
+        msg: "{{ hardware_check.stdout_lines }}"
+      when: hardware_check is defined
+
+    - name: Final deployment summary
+      debug:
+        msg: |
+          🎉 Zynthian v4 deployment successful!
+          
+          Your Mystery Melody Machine is running with Zynthian hardware controls.
+          
+          🎛️ Hardware Controls:
+          - Encoder 0: MIDI Input Channel (1-16)
+          - Encoder 1: MIDI Output Channel (1-16)  
+          - Encoder 2: CC Profile cycling
+          - Encoder 3: BPM adjustment (60-200)
+          - Button S1: Manual step trigger
+          - Button S2: Toggle mutation engine
+          - Button S3: Reset sequence
+          - Button S4: Toggle idle mode
+          
+          Quick commands:
+          - Check status: sudo systemctl status mystery-melody
+          - View logs: sudo journalctl -u mystery-melody -f  
+          - Hardware test: {{ rpi_dir }}/check-zynthian-hardware.sh
+          - Restart service: sudo systemctl restart mystery-melody
+          
+          The system will automatically start on boot.
+          Enjoy your hardware-controlled music generation! 🎵
+
+  handlers:
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: reboot pi
+      reboot:
+        reboot_timeout: 300
+      when: ansible_facts['reboot_required'] is defined

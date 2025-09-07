@@ -2,22 +2,28 @@
 # Ansible playbook for setting up Mystery Music Engine on Raspberry Pi
 # Usage: ansible-playbook -i inventory setup-mystery-music.yml
 #
-# This playbook:
-# 1. Installs all system dependencies
+# This playbook supports both standard Raspberry Pi and Zynthian v4 hardware:
+# 1. Installs all system dependencies (including Zynthian hardware support)
 # 2. Sets up the project with virtual environment
 # 3. Configures systemd service for auto-start
-# 4. Sets up proper permissions and groups
+# 4. Sets up proper permissions and groups for GPIO and MIDI access
+# 5. Configures Zynthian v4 hardware interfaces (GPIO, MIDI DIN)
+# 6. Optimizes system for low-latency audio/MIDI performance
 
-- name: Setup Mystery Music Engine on Raspberry Pi
+- name: Setup Mystery Music Engine on Raspberry Pi (with Zynthian v4 support)
   hosts: raspberry_pi
   become: yes
   vars:
     pi_user: "{{ ansible_user | default('oberon') }}"
     pi_project: "/opt/MysteryMelodyEngine"
-    rpi_dir: "{{ pi_project }}"
+    rpi_dir: "{{ pi_project }}/rpi-engine"
     venv_dir: "{{ rpi_dir }}/.venv"
     repo_url: "https://github.com/oberones/MysteryMelodyEngine.git"
     python_version: "python3"
+    # Zynthian hardware detection
+    is_zynthian_hardware: "{{ ansible_facts['board'] is defined and 'raspberry' in ansible_facts['board'] | lower }}"
+    # Configuration selection based on hardware
+    config_file: "{{ 'config.zynthian.yaml' if is_zynthian_hardware else 'config.production.yaml' }}"
     
   tasks:
     - name: Update package cache
@@ -44,6 +50,12 @@
           - alsa-utils
           - libjack-jackd2-dev
           
+          # Zynthian v4 hardware support
+          - python3-rpi.gpio
+          - wiringpi
+          - i2c-tools
+          - spi-tools
+          
           # System tools
           - git
           - curl
@@ -55,6 +67,20 @@
           - usbutils
         state: present
       tags: system
+
+    - name: Enable GPIO, I2C, and SPI interfaces for Zynthian hardware
+      lineinfile:
+        path: /boot/config.txt
+        line: "{{ item }}"
+        create: yes
+      loop:
+        - "dtparam=spi=on"
+        - "dtparam=i2c=on" 
+        - "dtparam=i2s=on"
+        # Zynthian v4 specific GPIO pull-ups for encoders and buttons
+        - "gpio=4,0,1,7,25,26,27,21,23,12,2,3=pu"
+      notify: reboot pi
+      tags: [system, zynthian]
 
     - name: Load ALSA sequencer module
       modprobe:
@@ -69,12 +95,61 @@
         create: yes
       tags: system
 
-    - name: Add user to required groups
-      user:
-        name: "{{ pi_user }}"
-        groups: audio,dialout,plugdev
-        append: yes
-      tags: system
+    - name: Optimize system for low-latency performance
+      sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        sysctl_file: /etc/sysctl.d/99-mystery-music-performance.conf
+      loop:
+        - { name: "kernel.sched_rt_runtime_us", value: "950000" }
+        - { name: "kernel.sched_rt_period_us", value: "1000000" }
+        - { name: "vm.swappiness", value: "10" }
+      tags: [system, performance]
+
+    - name: Configure audio limits for real-time performance
+      lineinfile:
+        path: /etc/security/limits.conf
+        line: "{{ item }}"
+        create: yes
+      loop:
+        - "@audio - rtprio 95"
+        - "@audio - memlock unlimited"
+        - "{{ pi_user }} - rtprio 95"
+        - "{{ pi_user }} - memlock unlimited"
+      tags: [system, performance]
+
+    - name: Disable unnecessary services for performance
+      systemd:
+        name: "{{ item }}"
+        enabled: no
+        state: stopped
+      loop:
+        - bluetooth
+        - cups
+        - avahi-daemon
+      ignore_errors: yes
+      tags: [system, performance]
+
+    - name: Set CPU governor to performance
+      copy:
+        dest: /etc/systemd/system/cpu-performance.service
+        content: |
+          [Unit]
+          Description=Set CPU governor to performance
+          After=multi-user.target
+          
+          [Service]
+          Type=oneshot
+          ExecStart=/bin/bash -c 'echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor'
+          RemainAfterExit=yes
+          
+          [Install]
+          WantedBy=multi-user.target
+        owner: root
+        group: root
+        mode: '0644'
+      notify: enable cpu performance
+      tags: [system, performance]
 
     - name: Create project directory
       file:
@@ -132,7 +207,39 @@
       become_user: "{{ pi_user }}"
       tags: python
 
-    - name: Create config.yaml from template if it doesn't exist
+    - name: Test Zynthian hardware integration
+      command: "{{ venv_dir }}/bin/python {{ rpi_dir }}/debug/test_zynthian_hardware.py"
+      become_user: "{{ pi_user }}"
+      register: zynthian_test
+      ignore_errors: yes
+      tags: [python, zynthian]
+
+    - name: Display Zynthian test results
+      debug:
+        msg: "{{ zynthian_test.stdout_lines }}"
+      when: zynthian_test is defined
+      tags: [python, zynthian]
+
+    - name: Setup Zynthian configuration
+      command: "make setup-zynthian"
+      args:
+        chdir: "{{ rpi_dir }}"
+      become_user: "{{ pi_user }}"
+      tags: [config, zynthian]
+
+    - name: Create config.yaml from Zynthian template if Zynthian hardware detected
+      copy:
+        src: "{{ rpi_dir }}/examples/config.zynthian.example.yaml"
+        dest: "{{ rpi_dir }}/{{ config_file }}"
+        owner: "{{ pi_user }}"
+        group: "{{ pi_user }}"
+        mode: '0644'
+        force: no
+      become_user: "{{ pi_user }}"
+      when: is_zynthian_hardware
+      tags: [config, zynthian]
+
+    - name: Create config.yaml from template if it doesn't exist (standard setup)
       copy:
         src: "config.deploy.yaml"
         dest: "{{ rpi_dir }}/config.production.yaml"
@@ -141,22 +248,29 @@
         mode: '0644'
         force: no
       become_user: "{{ pi_user }}"
+      when: not is_zynthian_hardware
       tags: config
 
     - name: Create systemd service file
       template:
-        src: mystery-music-engine.service.j2
-        dest: /etc/systemd/system/mystery-music-engine.service
+        src: mystery-music.service.j2
+        dest: /etc/systemd/system/mystery-melody.service
         owner: root
         group: root
         mode: '0644'
       notify: reload systemd
       tags: service
 
+    - name: Update systemd service template variables
+      set_fact:
+        service_config_file: "{{ config_file }}"
+        service_description: "{{ 'Mystery Melody Machine (Zynthian v4)' if is_zynthian_hardware else 'Mystery Melody Machine' }}"
+      tags: service
+
     - name: Create startup script
       template:
         src: start-mystery-music.sh.j2
-        dest: "{{ rpi_dir }}/start-mystery-music-engine.sh"
+        dest: "{{ rpi_dir }}/start-mystery-music.sh"
         owner: "{{ pi_user }}"
         group: "{{ pi_user }}"
         mode: '0755'
@@ -165,7 +279,7 @@
 
     - name: Create log directory
       file:
-        path: /var/log/mystery-music-engine
+        path: /var/log/mystery-melody
         state: directory
         owner: "{{ pi_user }}"
         group: "{{ pi_user }}"
@@ -174,9 +288,9 @@
 
     - name: Configure log rotation
       copy:
-        dest: /etc/logrotate.d/mystery-music-engine
+        dest: /etc/logrotate.d/mystery-melody
         content: |
-          /var/log/mystery-music-engine/*.log {
+          /var/log/mystery-melody/*.log {
               daily
               missingok
               rotate 7
@@ -193,7 +307,7 @@
 
     - name: Enable and start systemd service
       systemd:
-        name: mystery-music-engine
+        name: mystery-melody
         enabled: yes
         state: started
         daemon_reload: yes
@@ -210,18 +324,102 @@
 
     - name: Set up health check cron job
       cron:
-        name: "Mystery Music Engine Health Check"
+        name: "Mystery Melody Engine Health Check"
         minute: "*/5"
-        job: "{{ rpi_dir }}/health-check.sh >> /var/log/mystery-music-engine/health-check.log 2>&1"
+        job: "{{ rpi_dir }}/health-check.sh >> /var/log/mystery-melody/health-check.log 2>&1"
         user: "{{ pi_user }}"
       tags: monitoring
+
+    - name: Create Zynthian hardware status script
+      copy:
+        dest: "{{ rpi_dir }}/check-zynthian-hardware.sh"
+        content: |
+          #!/bin/bash
+          # Zynthian v4 Hardware Status Check
+          
+          echo "=== Zynthian Hardware Status ==="
+          echo "Date: $(date)"
+          echo
+          
+          # Check GPIO access
+          echo "GPIO Access:"
+          if [ -c /dev/gpiomem ]; then
+              echo "  ✓ /dev/gpiomem accessible"
+          else
+              echo "  ✗ /dev/gpiomem not accessible"
+          fi
+          
+          # Check user groups
+          echo "User Groups:"
+          groups {{ pi_user }} | grep -E "(gpio|audio|i2c|spi)" || echo "  ⚠ Missing required groups"
+          
+          # Check MIDI ports
+          echo "MIDI Ports:"
+          aconnect -l | grep -i "client\|port" || echo "  ⚠ No MIDI ports detected"
+          
+          # Test Zynthian integration
+          echo "Zynthian Integration Test:"
+          cd {{ rpi_dir }}
+          {{ venv_dir }}/bin/python debug/test_zynthian_hardware.py 2>&1 | tail -3
+          
+          echo "=== End Status Check ==="
+        owner: "{{ pi_user }}"
+        group: "{{ pi_user }}"
+        mode: '0755'
+      when: is_zynthian_hardware
+      tags: [monitoring, zynthian]
+
+    - name: Display deployment summary
+      debug:
+        msg: |
+          🎉 Mystery Melody Machine deployment complete!
+          
+          Hardware Configuration: {{ 'Zynthian v4' if is_zynthian_hardware else 'Standard Raspberry Pi' }}
+          Configuration File: {{ config_file }}
+          Project Location: {{ rpi_dir }}
+          Service Name: mystery-melody
+          Log Directory: /var/log/mystery-melody/
+          
+          {% if is_zynthian_hardware %}
+          🎛️ Zynthian v4 Controls:
+          - Encoder 0: MIDI Input Channel (1-16)
+          - Encoder 1: MIDI Output Channel (1-16)  
+          - Encoder 2: CC Profile cycling
+          - Encoder 3: BPM adjustment (60-200)
+          - Button S1: Manual step trigger
+          - Button S2: Toggle mutation engine
+          - Button S3: Reset sequence
+          - Button S4: Toggle idle mode
+          
+          Hardware Status: Run {{ rpi_dir }}/check-zynthian-hardware.sh
+          {% endif %}
+          
+          Next Steps:
+          1. Check service status: sudo systemctl status mystery-melody
+          2. View logs: sudo journalctl -u mystery-melody -f
+          3. Test hardware: {{ rpi_dir }}/check-zynthian-hardware.sh
+          
+          🚀 Your Mystery Melody Machine is ready!
+      tags: summary
 
   handlers:
     - name: reload systemd
       systemd:
         daemon_reload: yes
 
-    - name: restart mystery-music
+    - name: restart mystery-melody
       systemd:
-        name: mystery-music-engine
+        name: mystery-melody
         state: restarted
+
+    - name: reboot pi
+      reboot:
+        reboot_timeout: 300
+      when: ansible_facts['reboot_required'] is defined
+
+    - name: enable cpu performance
+      systemd:
+        name: cpu-performance
+        enabled: yes
+        state: started
+        daemon_reload: yes

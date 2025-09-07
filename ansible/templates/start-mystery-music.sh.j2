@@ -1,20 +1,21 @@
 #!/bin/bash
-# Startup script for Mystery Music Engine
-# This script ensures the virtual environment is activated and starts the engine
+# Startup script for Mystery Melody Machine
+# Supports both standard Pi and Zynthian v4 hardware configurations
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$SCRIPT_DIR/.venv"
-CONFIG_FILE="$SCRIPT_DIR/config.production.yaml"
-LOG_DIR="/var/log/mystery-music"
+CONFIG_FILE="$SCRIPT_DIR/{{ service_config_file | default('config.production.yaml') }}"
+LOG_DIR="/var/log/mystery-melody"
 
 # Function to log with timestamp
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
 }
 
-log "Starting Mystery Music Engine..."
+log "Starting Mystery Melody Machine..."
+log "Hardware: {{ 'Zynthian v4' if is_zynthian_hardware else 'Standard Pi' }}"
 log "Script directory: $SCRIPT_DIR"
 log "Virtual environment: $VENV_DIR"
 log "Config file: $CONFIG_FILE"
@@ -27,7 +28,7 @@ fi
 
 # Check if config file exists, fallback to default
 if [ ! -f "$CONFIG_FILE" ]; then
-    log "Production config not found, using default config.yaml"
+    log "Config not found, using default config.yaml"
     CONFIG_FILE="$SCRIPT_DIR/config.yaml"
 fi
 
@@ -35,6 +36,30 @@ if [ ! -f "$CONFIG_FILE" ]; then
     log "ERROR: No config file found"
     exit 1
 fi
+
+{% if is_zynthian_hardware %}
+# Zynthian v4 Hardware Checks
+log "Performing Zynthian hardware checks..."
+
+# Check GPIO access
+if [ ! -c /dev/gpiomem ]; then
+    log "WARNING: /dev/gpiomem not accessible - hardware controls may not work"
+fi
+
+# Check user groups
+if ! groups | grep -q gpio; then
+    log "WARNING: User not in gpio group - hardware controls may not work"
+fi
+
+# Check for Zynthian MIDI interfaces
+log "Checking for Zynthian MIDI interfaces..."
+if command -v aconnect >/dev/null 2>&1; then
+    aconnect -l | grep -E "(pisound|audiophonics|hifiberry|iqaudio|fe-pi)" && \
+        log "✓ Zynthian MIDI hardware detected" || \
+        log "⚠ No Zynthian MIDI hardware detected"
+fi
+
+{% endif %}
 
 # Activate virtual environment
 log "Activating virtual environment..."
@@ -46,6 +71,13 @@ if ! python -c "import mido" 2>/dev/null; then
     log "ERROR: mido not available, installing dependencies..."
     pip install -r "$SCRIPT_DIR/requirements.txt"
 fi
+
+{% if is_zynthian_hardware %}
+# Test Zynthian integration
+if ! python -c "from src.zynthian_integration import create_zynthian_integration; print('✓ Zynthian integration available')" 2>/dev/null; then
+    log "WARNING: Zynthian integration not working properly"
+fi
+{% endif %}
 
 # Check MIDI devices
 log "Checking MIDI devices..."
@@ -61,14 +93,7 @@ print(f'Output ports: {outputs}')
 cd "$SCRIPT_DIR"
 
 # Start the engine
-log "Starting Mystery Music Engine..."
+log "Starting Mystery Melody Machine..."
 log "Using config: $CONFIG_FILE"
 
-# Use robust MIDI handling by default on Raspberry Pi
-if [ -f "main_rpi.py" ]; then
-    log "Using Raspberry Pi optimized version"
-    exec python main_rpi.py --use-robust-midi --config "$CONFIG_FILE"
-else
-    log "Using standard version"
-    exec python src/main.py --config "$CONFIG_FILE"
-fi
+exec python src/main.py --config "$CONFIG_FILE"

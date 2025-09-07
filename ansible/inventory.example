@@ -1,0 +1,45 @@
+# Ansible Inventory for Mystery Melody Machine Deployment
+# Copy this file to 'inventory' and update with your Pi details
+
+[raspberry_pi]
+# Standard Raspberry Pi deployment
+standard-pi ansible_host=192.168.1.100 ansible_user=pi
+
+# Zynthian v4 Hardware deployment  
+zynthian-pi ansible_host=192.168.1.101 ansible_user=pi is_zynthian_hardware=true
+
+[raspberry_pi:vars]
+# Common variables for all Pis
+ansible_python_interpreter=/usr/bin/python3
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+pi_user=pi
+
+# Project configuration
+repo_branch=zynthian_support  # Use the Zynthian support branch
+python_version=python3
+
+# Performance optimization
+enable_performance_tweaks=true
+disable_unnecessary_services=true
+
+[zynthian_hardware]
+# Group specifically for Zynthian v4 hardware
+zynthian-pi
+
+[zynthian_hardware:vars]
+# Zynthian-specific variables
+is_zynthian_hardware=true
+config_file=config.zynthian.yaml
+service_description="Mystery Melody Machine (Zynthian v4)"
+
+# Zynthian hardware optimization
+enable_gpio_optimization=true
+enable_realtime_kernel=false  # Set to true if RT kernel is installed
+audio_buffer_size=64         # Low latency audio
+midi_buffer_size=32          # Low latency MIDI
+
+# Hardware interface settings
+zynthian_encoder_sensitivity=1
+zynthian_bpm_step=5
+zynthian_min_bpm=60
+zynthian_max_bpm=200
