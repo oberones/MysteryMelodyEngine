@@ -16,20 +16,24 @@ The Zynthian v4 kit provides:
 ## Control Mapping
 
 ### Encoders (with push buttons)
-- **Encoder 0 (Layer)**: MIDI Input Channel (1-16)
-  - *Push*: Reset to channel 1
-- **Encoder 1 (Back)**: MIDI Output Channel (1-16)
-  - *Push*: Reset to channel 1
-- **Encoder 2 (Select)**: CC Profile cycling
-  - *Push*: Reset to first profile
-- **Encoder 3 (Learn)**: BPM adjustment (60-200)
-  - *Push*: Reset to 120 BPM
+- **Encoder 0 (Layer)**: Sequencer Steps (1-32)
+  - *Rotate*: Browse step count values
+  - *Push*: Apply selected step count to sequencer
+- **Encoder 1 (Back)**: Scale Selection
+  - *Rotate*: Browse available scales 
+  - *Push*: Apply selected scale to sequencer
+- **Encoder 2 (Select)**: Root Note Selection (C-B)
+  - *Rotate*: Browse root notes (C, C#, D, D#, E, F, F#, G, G#, A, A#, B)
+  - *Push*: Apply selected root note to sequencer
+- **Encoder 3 (Learn)**: Direction Pattern Selection
+  - *Rotate*: Browse patterns (forward, backward, ping_pong, random, fugue, song)
+  - *Push*: Apply selected direction pattern to sequencer
 
 ### Push Buttons
-- **S1**: Manual step trigger
-- **S2**: Toggle mutation engine on/off
-- **S3**: Reset sequence to beginning
-- **S4**: Toggle idle mode on/off
+- **S1**: Select Korg NTS-1 MK2 CC profile
+- **S2**: Select Roland JX-08 CC profile
+- **S3**: Select Waldorf Streichfett CC profile
+- **S4**: Select Generic Analog CC profile
 
 ## Installation Steps
 

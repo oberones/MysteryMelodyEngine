@@ -5,14 +5,14 @@ This module integrates the Mystery Melody Machine with Zynthian v4 hardware,
 providing physical control over key sequencer parameters.
 
 Hardware Control Mapping:
-- Encoder 0 (Layer): MIDI Input Channel (1-16)
-- Encoder 1 (Back): MIDI Output Channel (1-16)  
-- Encoder 2 (Select): CC Profile selection
-- Encoder 3 (Learn): BPM adjustment (60-200)
-- Button S1: Manual step trigger
-- Button S2: Toggle mutation engine on/off
-- Button S3: Reset sequence to beginning
-- Button S4: Toggle idle mode on/off
+- Encoder 0 (Layer): Sequencer steps (1-32) with select via button press
+- Encoder 1 (Back): Scale selection with select via button press
+- Encoder 2 (Select): Root note selection (C-B) with select via button press
+- Encoder 3 (Learn): Direction pattern selection with select via button press
+- Button S1: Select NTS-1 MK2 CC profile
+- Button S2: Select Roland JX-08 CC profile
+- Button S3: Select Waldorf Streichfett CC profile
+- Button S4: Select Generic Analog CC profile
 
 This allows real-time control of the sequencer without external MIDI controllers.
 """
@@ -83,15 +83,48 @@ class ZynthianIntegrationManager:
         self.hw_interface: Optional[ZynthianHardwareInterface] = None
         self.midi_interface: Optional[ZynthianMidiInterface] = None
         
-        # Available CC profiles for cycling
+        # Available options for selection
         self.cc_profiles: List[str] = [
-            "roland_jx08",
-            "korg_nts1_mk2", 
+            "korg_nts1_mk2",
+            "roland_jx08", 
             "waldorf_streichfett",
-            "generic_analog",
-            "fm_synth"
+            "generic_analog"
         ]
-        self.current_cc_profile_index: int = 0
+        
+        # Available scales (will be populated from sequencer)
+        self.available_scales: List[str] = []
+        
+        # Available direction patterns
+        self.direction_patterns: List[str] = [
+            "forward",
+            "backward", 
+            "ping_pong",
+            "random",
+            "fugue",
+            "song"
+        ]
+        
+        # Root notes (C=0, C#=1, D=2, etc.)
+        self.root_notes: List[Dict[str, Any]] = [
+            {"name": "C", "midi": 60},
+            {"name": "C#", "midi": 61},
+            {"name": "D", "midi": 62},
+            {"name": "D#", "midi": 63},
+            {"name": "E", "midi": 64},
+            {"name": "F", "midi": 65},
+            {"name": "F#", "midi": 66},
+            {"name": "G", "midi": 67},
+            {"name": "G#", "midi": 68},
+            {"name": "A", "midi": 69},
+            {"name": "A#", "midi": 70},
+            {"name": "B", "midi": 71}
+        ]
+        
+        # Current selection indices (for browsing)
+        self.current_steps_selection = 4  # 1-32, default to 4
+        self.current_scale_selection = 0  # Index into available_scales
+        self.current_root_selection = 0   # Index into root_notes (C)
+        self.current_direction_selection = 0  # Index into direction_patterns
         
         if not ZYNTHIAN_AVAILABLE:
             self.log.warning("Zynthian hardware not available")
@@ -125,17 +158,51 @@ class ZynthianIntegrationManager:
             self.log.warning("Cannot start Zynthian integration - hardware not available")
             return
         
-        # Get current CC profile index
-        if self.external_hardware:
-            current_profile = self.external_hardware.get_active_profile_id()
-            if current_profile in self.cc_profiles:
-                self.current_cc_profile_index = self.cc_profiles.index(current_profile)
+        # Initialize current selections from state
+        self._initialize_current_selections()
         
         self.hw_interface.start()
         self.log.info("Zynthian integration started")
         
         # Log current configuration
         self._log_current_state()
+    
+    def _initialize_current_selections(self):
+        """Initialize current selection indices from sequencer state"""
+        if not self.state:
+            return
+        
+        # Get available scales from sequencer
+        if hasattr(self.sequencer, 'available_scales'):
+            self.available_scales = self.sequencer.available_scales
+        else:
+            # Default scales if not available
+            self.available_scales = ["major", "minor", "pentatonic_major", "pentatonic_minor", 
+                                   "dorian", "mixolydian", "blues", "chromatic"]
+        
+        # Initialize current selections from state
+        current_state = self.state.get_all()
+        
+        # Steps (default 4, range 1-32)
+        self.current_steps_selection = current_state.get('steps', 4)
+        
+        # Scale selection
+        current_scale = current_state.get('scale', 'major')
+        if current_scale in self.available_scales:
+            self.current_scale_selection = self.available_scales.index(current_scale)
+        
+        # Root note selection  
+        current_root = current_state.get('root_note', 60)  # Default C4
+        # Find matching root note
+        for i, note_info in enumerate(self.root_notes):
+            if note_info['midi'] == current_root:
+                self.current_root_selection = i
+                break
+        
+        # Direction pattern selection
+        current_direction = current_state.get('direction_pattern', 'forward')
+        if current_direction in self.direction_patterns:
+            self.current_direction_selection = self.direction_patterns.index(current_direction)
     
     def stop(self):
         """Stop the Zynthian integration"""
@@ -162,38 +229,38 @@ class ZynthianIntegrationManager:
         step = direction * self.config.encoder_sensitivity
         
         if encoder == ZynthianEncoder.LAYER:
-            # MIDI Input Channel (1-16)
-            self._adjust_midi_input_channel(step)
+            # Sequencer steps (1-32)
+            self._adjust_steps_selection(step)
             
         elif encoder == ZynthianEncoder.BACK:
-            # MIDI Output Channel (1-16)
-            self._adjust_midi_output_channel(step)
+            # Scale selection
+            self._adjust_scale_selection(step)
             
         elif encoder == ZynthianEncoder.SELECT:
-            # CC Profile selection
-            self._cycle_cc_profile(direction)
+            # Root note selection (C-B)
+            self._adjust_root_selection(step)
             
         elif encoder == ZynthianEncoder.LEARN:
-            # BPM adjustment
-            self._adjust_bpm(step * self.config.bpm_step)
+            # Direction pattern selection
+            self._adjust_direction_selection(step)
     
     def _handle_encoder_button(self, encoder: ZynthianEncoder):
         """Handle encoder button press events"""
         if encoder == ZynthianEncoder.LAYER:
-            # Reset MIDI input channel to 1
-            self._set_midi_input_channel(1)
+            # Apply selected steps value
+            self._apply_steps_selection()
             
         elif encoder == ZynthianEncoder.BACK:
-            # Reset MIDI output channel to 1
-            self._set_midi_output_channel(1)
+            # Apply selected scale
+            self._apply_scale_selection()
             
         elif encoder == ZynthianEncoder.SELECT:
-            # Reset to first CC profile
-            self._set_cc_profile_index(0)
+            # Apply selected root note
+            self._apply_root_selection()
             
         elif encoder == ZynthianEncoder.LEARN:
-            # Reset BPM to default (120)
-            self._set_bpm(120)
+            # Apply selected direction pattern
+            self._apply_direction_selection()
     
     def _handle_button_event(self, event: ButtonEvent):
         """Handle button press events"""
@@ -201,142 +268,98 @@ class ZynthianIntegrationManager:
             return
         
         if event.button == ZynthianButton.S1:
-            # Manual step trigger
-            self._trigger_step()
+            # Select NTS-1 MK2 CC profile
+            self._select_cc_profile("korg_nts1_mk2")
             
         elif event.button == ZynthianButton.S2:
-            # Toggle mutation engine
-            self._toggle_mutation()
+            # Select Roland JX-08 CC profile
+            self._select_cc_profile("roland_jx08")
             
         elif event.button == ZynthianButton.S3:
-            # Reset sequence
-            self._reset_sequence()
+            # Select Waldorf Streichfett CC profile
+            self._select_cc_profile("waldorf_streichfett")
             
         elif event.button == ZynthianButton.S4:
-            # Toggle idle mode
-            self._toggle_idle()
+            # Select Generic Analog CC profile
+            self._select_cc_profile("generic_analog")
     
-    def _adjust_midi_input_channel(self, step: int):
-        """Adjust MIDI input channel"""
-        # Note: This would require modifying the MIDI input configuration
-        # For now, we'll log the action
-        self.log.info(f"MIDI input channel adjustment requested: {step}")
-        # TODO: Implement dynamic MIDI channel switching
+    # Encoder 0: Steps (1-32)
+    def _adjust_steps_selection(self, step: int):
+        """Adjust selected steps value"""
+        self.current_steps_selection = max(1, min(32, self.current_steps_selection + step))
+        self.log.info(f"Steps selection: {self.current_steps_selection}")
     
-    def _adjust_midi_output_channel(self, step: int):
-        """Adjust MIDI output channel"""
-        if not self.external_hardware:
-            return
-        
-        # Get current channel from external hardware or state
-        current_channel = 1  # Default
-        new_channel = max(1, min(16, current_channel + step))
-        
-        self.log.info(f"MIDI output channel: {current_channel} -> {new_channel}")
-        # TODO: Update MIDI output channel dynamically
-    
-    def _set_midi_input_channel(self, channel: int):
-        """Set MIDI input channel to specific value"""
-        self.log.info(f"Reset MIDI input channel to {channel}")
-    
-    def _set_midi_output_channel(self, channel: int):
-        """Set MIDI output channel to specific value"""
-        self.log.info(f"Reset MIDI output channel to {channel}")
-    
-    def _cycle_cc_profile(self, direction: int):
-        """Cycle through available CC profiles"""
-        if not self.external_hardware:
-            return
-        
-        # Update index
-        self.current_cc_profile_index += direction
-        self.current_cc_profile_index %= len(self.cc_profiles)
-        
-        new_profile = self.cc_profiles[self.current_cc_profile_index]
-        
-        try:
-            self.external_hardware.set_active_profile(new_profile)
-            self.log.info(f"CC profile changed to: {new_profile}")
-        except Exception as e:
-            self.log.error(f"Failed to change CC profile: {e}")
-    
-    def _set_cc_profile_index(self, index: int):
-        """Set CC profile to specific index"""
-        if not self.external_hardware or index >= len(self.cc_profiles):
-            return
-        
-        self.current_cc_profile_index = index
-        profile = self.cc_profiles[index]
-        
-        try:
-            self.external_hardware.set_active_profile(profile)
-            self.log.info(f"CC profile reset to: {profile}")
-        except Exception as e:
-            self.log.error(f"Failed to reset CC profile: {e}")
-    
-    def _adjust_bpm(self, step: int):
-        """Adjust BPM within configured range"""
+    def _apply_steps_selection(self):
+        """Apply the selected steps value to sequencer"""
         if not self.state:
             return
         
-        current_bpm = self.state.get('bpm', 120)
-        new_bpm = max(self.config.min_bpm, min(self.config.max_bpm, current_bpm + step))
-        
-        if new_bpm != current_bpm:
-            self.state.update('bpm', new_bpm, source='zynthian_hardware')
-            self.log.info(f"BPM: {current_bpm} -> {new_bpm}")
+        self.state.set('steps', self.current_steps_selection, source='zynthian_hardware')
+        self.log.info(f"Applied steps: {self.current_steps_selection}")
     
-    def _set_bpm(self, bpm: int):
-        """Set BPM to specific value"""
+    # Encoder 1: Scale selection
+    def _adjust_scale_selection(self, step: int):
+        """Adjust selected scale"""
+        if not self.available_scales:
+            return
+        
+        self.current_scale_selection = (self.current_scale_selection + step) % len(self.available_scales)
+        scale_name = self.available_scales[self.current_scale_selection]
+        self.log.info(f"Scale selection: {scale_name}")
+    
+    def _apply_scale_selection(self):
+        """Apply the selected scale to sequencer"""
+        if not self.state or not self.available_scales:
+            return
+        
+        scale_name = self.available_scales[self.current_scale_selection]
+        self.state.set('scale', scale_name, source='zynthian_hardware')
+        self.log.info(f"Applied scale: {scale_name}")
+    
+    # Encoder 2: Root note selection 
+    def _adjust_root_selection(self, step: int):
+        """Adjust selected root note"""
+        self.current_root_selection = (self.current_root_selection + step) % len(self.root_notes)
+        note_info = self.root_notes[self.current_root_selection]
+        self.log.info(f"Root note selection: {note_info['name']} (MIDI {note_info['midi']})")
+    
+    def _apply_root_selection(self):
+        """Apply the selected root note to sequencer"""
         if not self.state:
             return
         
-        bpm = max(self.config.min_bpm, min(self.config.max_bpm, bpm))
-        self.state.update('bpm', bpm, source='zynthian_hardware')
-        self.log.info(f"BPM reset to: {bpm}")
+        note_info = self.root_notes[self.current_root_selection]
+        self.state.set('root_note', note_info['midi'], source='zynthian_hardware')
+        self.log.info(f"Applied root note: {note_info['name']} (MIDI {note_info['midi']})")
     
-    def _trigger_step(self):
-        """Manually trigger a sequence step"""
-        if self.action_handler:
-            # Create a manual step trigger event
-            from events import SemanticEvent
-            event = SemanticEvent('trigger_step', {'source': 'zynthian_hardware'})
-            self.action_handler.handle_semantic_event(event)
-            self.log.info("Manual step triggered")
+    # Encoder 3: Direction pattern selection
+    def _adjust_direction_selection(self, step: int):
+        """Adjust selected direction pattern"""
+        self.current_direction_selection = (self.current_direction_selection + step) % len(self.direction_patterns)
+        pattern_name = self.direction_patterns[self.current_direction_selection]
+        self.log.info(f"Direction pattern selection: {pattern_name}")
     
-    def _toggle_mutation(self):
-        """Toggle mutation engine on/off"""
-        if not self.mutation_engine:
+    def _apply_direction_selection(self):
+        """Apply the selected direction pattern to sequencer"""
+        if not self.sequencer:
             return
         
-        if self.mutation_engine.is_running():
-            self.mutation_engine.stop()
-            self.log.info("Mutation engine stopped")
-        else:
-            self.mutation_engine.start()
-            self.log.info("Mutation engine started")
+        pattern_name = self.direction_patterns[self.current_direction_selection]
+        self.sequencer.set_direction_pattern(pattern_name)
+        self.log.info(f"Applied direction pattern: {pattern_name}")
     
-    def _reset_sequence(self):
-        """Reset sequence to beginning"""
-        if self.sequencer:
-            # Reset sequencer position
-            # Note: This depends on sequencer implementation
-            self.log.info("Sequence reset requested")
-            # TODO: Implement sequence reset
-    
-    def _toggle_idle(self):
-        """Toggle idle mode on/off"""
-        if not self.idle_manager:
+    # Button CC profile selection
+    def _select_cc_profile(self, profile_name: str):
+        """Select a specific CC profile"""
+        if not self.external_hardware:
+            self.log.warning("External hardware manager not available")
             return
         
-        # Check current idle state and toggle
-        status = self.idle_manager.get_status()
-        if status.get('is_idle', False):
-            self.idle_manager.wake()
-            self.log.info("Idle mode disabled")
-        else:
-            self.idle_manager.trigger_idle()
-            self.log.info("Idle mode enabled")
+        try:
+            self.external_hardware.set_active_profile(profile_name)
+            self.log.info(f"Selected CC profile: {profile_name}")
+        except Exception as e:
+            self.log.error(f"Failed to select CC profile {profile_name}: {e}")
     
     def _log_current_state(self):
         """Log current configuration state"""
@@ -345,19 +368,26 @@ class ZynthianIntegrationManager:
         
         current_state = self.state.get_all()
         self.log.info("=== ZYNTHIAN CONTROL STATE ===")
-        self.log.info(f"BPM: {current_state.get('bpm', 'unknown')}")
-        self.log.info(f"CC Profile: {self.cc_profiles[self.current_cc_profile_index]}")
-        self.log.info(f"Available profiles: {self.cc_profiles}")
+        self.log.info(f"Steps: {self.current_steps_selection} (applied: {current_state.get('steps', 'unknown')})")
         
-        if self.mutation_engine:
-            mutation_running = self.mutation_engine.is_running()
-            self.log.info(f"Mutation: {'enabled' if mutation_running else 'disabled'}")
+        if self.available_scales and self.current_scale_selection < len(self.available_scales):
+            current_scale_name = self.available_scales[self.current_scale_selection]
+            self.log.info(f"Scale: {current_scale_name} (applied: {current_state.get('scale', 'unknown')})")
         
-        if self.idle_manager:
-            idle_status = self.idle_manager.get_status()
-            is_idle = idle_status.get('is_idle', False)
-            self.log.info(f"Idle mode: {'active' if is_idle else 'inactive'}")
+        current_root_note = self.root_notes[self.current_root_selection]
+        self.log.info(f"Root Note: {current_root_note['name']} (applied: {current_state.get('root_note', 'unknown')})")
         
+        current_direction = self.direction_patterns[self.current_direction_selection]
+        self.log.info(f"Direction: {current_direction} (applied: {current_state.get('direction_pattern', 'unknown')})")
+        
+        if self.external_hardware:
+            try:
+                active_profile = self.external_hardware.get_active_profile_id()
+                self.log.info(f"Active CC Profile: {active_profile}")
+            except:
+                self.log.info("CC Profile: unknown")
+        
+        self.log.info(f"Available CC Profiles: {self.cc_profiles}")
         self.log.info("=== END ZYNTHIAN STATE ===")
 
 

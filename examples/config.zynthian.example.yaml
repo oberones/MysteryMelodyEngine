@@ -29,14 +29,14 @@ midi:
     cc_throttle_ms: 5             # Lower latency for hardware controls
 
 # Zynthian Hardware Control Mapping:
-# Encoder 0 (Layer): MIDI Input Channel (1-16)
-# Encoder 1 (Back): MIDI Output Channel (1-16)  
-# Encoder 2 (Select): CC Profile cycling
-# Encoder 3 (Learn): BPM adjustment (60-200)
-# Button S1: Manual step trigger
-# Button S2: Toggle mutation engine
-# Button S3: Reset sequence
-# Button S4: Toggle idle mode
+# Encoder 0 (Layer): Sequencer Steps (1-32) - rotate to browse, press to apply
+# Encoder 1 (Back): Scale Selection - rotate to browse, press to apply
+# Encoder 2 (Select): Root Note (C-B) - rotate to browse, press to apply
+# Encoder 3 (Learn): Direction Pattern - rotate to browse, press to apply
+# Button S1: Select NTS-1 MK2 CC Profile
+# Button S2: Select Roland JX-08 CC Profile
+# Button S3: Select Waldorf Streichfett CC Profile
+# Button S4: Select Generic Analog CC Profile
 
 mapping:
   # Keep existing MIDI mappings for external controllers

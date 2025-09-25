@@ -15,14 +15,14 @@ Hardware mapping for Zynthian v4:
 - Button S1-S4: Additional pushbuttons
 
 For the Mystery Melody Machine, we'll map:
-- Encoder 0: MIDI Input Channel selection
-- Encoder 1: MIDI Output Channel selection  
-- Encoder 2: CC Profile selection
-- Encoder 3: BPM adjustment
-- Button S1: Trigger step manually
-- Button S2: Toggle mutation engine
-- Button S3: Reset sequence
-- Button S4: Toggle idle mode
+- Encoder 0: Sequencer steps (1-32) selection with apply via button
+- Encoder 1: Scale selection with apply via button
+- Encoder 2: Root note selection (C-B) with apply via button
+- Encoder 3: Direction pattern selection with apply via button
+- Button S1: Select NTS-1 MK2 CC profile
+- Button S2: Select Roland JX-08 CC profile
+- Button S3: Select Waldorf Streichfett CC profile
+- Button S4: Select Generic Analog CC profile
 """
 
 import logging
@@ -42,18 +42,18 @@ except ImportError:
 
 class ZynthianEncoder(IntEnum):
     """Zynthian v4 encoder assignments"""
-    LAYER = 0    # Top-left encoder (MIDI Input Channel)
-    BACK = 1     # Top-right encoder (MIDI Output Channel)
-    SELECT = 2   # Bottom-left encoder (CC Profile)
-    LEARN = 3    # Bottom-right encoder (BPM)
+    LAYER = 0    # Top-left encoder (Sequencer Steps 1-32)
+    BACK = 1     # Top-right encoder (Scale Selection)
+    SELECT = 2   # Bottom-left encoder (Root Note C-B)
+    LEARN = 3    # Bottom-right encoder (Direction Pattern)
 
 
 class ZynthianButton(IntEnum):
     """Zynthian v4 button assignments"""
-    S1 = 0  # Trigger step
-    S2 = 1  # Toggle mutation
-    S3 = 2  # Reset sequence  
-    S4 = 3  # Toggle idle
+    S1 = 0  # Select NTS-1 MK2 CC profile
+    S2 = 1  # Select Roland JX-08 CC profile
+    S3 = 2  # Select Waldorf Streichfett CC profile  
+    S4 = 3  # Select Generic Analog CC profile
 
 
 @dataclass
