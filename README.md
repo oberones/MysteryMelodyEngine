@@ -1,6 +1,6 @@
-# Mystery Music Engine (Phase 6)
+# Mystery Music Engine (Phase 6 + HID Refactor)
 
-Phase 6 implements idle mode detection and management with automatic ambient profile switching (see root `SPEC.md` + `docs/ROADMAP.md`).
+Phase 6 implements idle mode detection and management with automatic ambient profile switching. **NEW**: Hybrid input system supporting both HID arcade controls and MIDI from Teensy (see root `SPEC.md` + `docs/ROADMAP.md`).
 
 ## Implemented
 
@@ -52,6 +52,15 @@ Phase 6 implements idle mode detection and management with automatic ambient pro
 - **Configurable behavior** - Timeout, profiles, and fade timing all configurable via YAML.
 - **Real-time monitoring** - Status tracking and callback system for integration with other components.
 
+### HID Refactor (Phase 6+) 🎮 **NEW**
+- **Hybrid Input System** - Supports both HID arcade controls and MIDI from Teensy simultaneously.
+- **HID Arcade Buttons** - 10 arcade buttons via USB gamepad/joystick (maps to MIDI Notes 60-69).
+- **HID Joystick** - 4-direction joystick control via USB gamepad (maps to MIDI CCs 50-53).
+- **MIDI from Teensy** - Potentiometers and switches continue to work via existing MIDI input.
+- **Seamless Integration** - Both input sources generate the same semantic events and work together.
+- **Configurable Mapping** - HID button and joystick mappings configurable via YAML.
+- **Backward Compatible** - Existing MIDI-only configurations continue to work unchanged.
+
 ## Run
 
 **IMPORTANT**: All Python operations must be performed within the virtual environment.
@@ -60,7 +69,7 @@ Phase 6 implements idle mode detection and management with automatic ambient pro
 # Activate virtual environment (from engine directory)
 source .venv/bin/activate
 
-# Install dependencies
+# Install dependencies (including new pygame for HID support)
 pip install -r requirements.txt
 
 # Run tests
@@ -68,6 +77,7 @@ pytest tests -q
 
 # Run specific phase tests
 pytest tests/test_idle.py -v          # Phase 6: Idle mode tests
+pytest tests/test_hid_input.py -v     # HID refactor: Hybrid input tests
 pytest tests/test_mutation.py -v      # Phase 5: Mutation engine tests  
 pytest tests/test_sequencer.py -v     # Phase 5.5: Enhanced sequencer tests
 
@@ -80,11 +90,11 @@ python demo_phase5_5.py
 # Run direction patterns demo (detailed direction pattern showcase)
 python demo_direction_patterns.py
 
-# Run configuration logging demo
-python demo_config_logging.py
-
 # Run idle mode demo (Phase 6 - shows idle detection and ambient profiles)
 python demo_idle_mode.py
+
+# Run hybrid input demo (HID + MIDI input system) 🎮 NEW
+python demo_hybrid_input.py
 
 # Run mutation demo (shows mutation engine)
 python demo_mutation.py
@@ -106,22 +116,23 @@ ts=2025-08-20T12:00:45 level=INFO logger=idle msg=idle_state_restored params=[de
 
 Set `ENGINE_DEBUG_TIMING=1` for extra timing debug categories (future phases).
 
-## Architecture (Phase 6)
+## Architecture (Phase 6 + HID Refactor)
 
 ```
-MIDI Input → Router → Action Handler → State Container
-                           ↓              ↓
-                    Note Events    State Changes
-                           ↓              ↓
-                    Audio Backend   Sequencer Clock
-                                         ↓
-                              Step Events → Pattern Gate
-                                         ↓
-                              Probability Gate (Per-Step)
-                                         ↓
-                              Scale Mapper → Note Generation
-                                         ↓
-                              Velocity Variation → Audio Output
+HID Input (Arcade) ──┐
+                     ├─→ Hybrid Input ──→ Action Handler → State Container
+MIDI Input (Teensy) ──┘      │                   ↓              ↓
+                              ├─→ Semantic Events        State Changes
+                              └─→ Router                      ↓
+                                     ↓                   Sequencer Clock
+                              Audio Backend                   ↓
+                                                    Step Events → Pattern Gate
+                                                             ↓
+                                    Probability Gate (Per-Step)
+                                                             ↓
+                                    Scale Mapper → Note Generation
+                                                             ↓
+                                    Velocity Variation → Audio Output
                                          
 Idle Manager ←──────────── Interaction Tracking
      ↓
@@ -142,6 +153,9 @@ Mutation Engine (Idle-Aware) → Parameter Changes
 - **Velocity Engine**: Dynamic velocity variation based on probability values ✨
 - **Idle Manager**: Automatic idle detection with ambient profile switching 🌙
 - **Mutation Engine**: Idle-aware parameter mutations for evolving soundscapes
+- **Hybrid Input System**: Unified input from both HID arcade controls and MIDI Teensy 🎮
+- **HID Input**: USB gamepad/joystick support for arcade buttons and joystick 🎮
+- **MIDI Input**: Existing Teensy support for potentiometers and switches 🎛️
 
 ## Current Capabilities
 
@@ -202,6 +216,30 @@ Mutation Engine (Idle-Aware) → Parameter Changes
 | `mutation.interval_min_s` | int | 1+ | 120 | Minimum mutation interval in seconds |
 | `mutation.interval_max_s` | int | 1+ | 240 | Maximum mutation interval in seconds |
 | `mutation.max_changes_per_cycle` | int | 0+ | 2 | Max parameter changes per mutation cycle |
+
+### HID Refactor: Arcade Controls 🎮
+| Parameter | Type | Range | Default | Description |
+|-----------|------|-------|---------|-------------|
+| `hid.device_name` | string | Device name | 'Generic USB Joystick' | Name of HID device to connect to |
+| `hid.button_mapping` | dict | Button index → action | {0-9: 'trigger_step'} | Mapping of button indices to semantic actions |
+| `hid.joystick_mapping` | dict | Direction → action | See below | Mapping of joystick directions to semantic actions |
+
+**Default HID Joystick Mapping**:
+```yaml
+joystick_mapping:
+  up: "osc_a"       # Maps to MIDI CC 50
+  down: "osc_b"     # Maps to MIDI CC 51
+  left: "mod_a"     # Maps to MIDI CC 52
+  right: "mod_b"    # Maps to MIDI CC 53
+```
+
+**Default HID Button Mapping**:
+```yaml
+button_mapping:
+  0: "trigger_step"  # Button 0 → MIDI Note 60
+  1: "trigger_step"  # Button 1 → MIDI Note 61
+  # ... (continues for buttons 2-9 → MIDI Notes 62-69)
+```
 
 ## Pattern Presets 🎵
 
@@ -326,6 +364,37 @@ You can also define custom CC profiles in `config.yaml` under the `cc_profiles` 
 ## Configuration Example (config.yaml)
 
 ```yaml
+# HID Input Configuration (arcade buttons + joystick) 🎮 NEW
+hid:
+  device_name: "Generic USB Joystick"
+  button_mapping:
+    0: "trigger_step"    # Button 0 → Note 60
+    1: "trigger_step"    # Button 1 → Note 61
+    # ... continues for buttons 2-9
+  joystick_mapping:
+    up: "osc_a"         # Joystick Up → CC 50
+    down: "osc_b"       # Joystick Down → CC 51
+    left: "mod_a"       # Joystick Left → CC 52
+    right: "mod_b"      # Joystick Right → CC 53
+
+# MIDI Input Configuration (Teensy potentiometers + switches)
+midi:
+  input_port: "auto"
+  output_port: "RK006 OUT_ALL"
+  input_channel: 1
+  output_channel: 12
+
+# Note: Button and joystick mappings moved to HID section
+# MIDI mapping now only contains Teensy potentiometers and switches
+mapping:
+  buttons: {}  # Empty - buttons handled by HID
+  ccs:
+    "21": filter_cutoff      # K1 potentiometer
+    "22": filter_resonance   # K2 potentiometer
+    "60": osc_type          # S1 switch
+    "61": filter_type       # S2 switch
+    # No joystick CCs - handled by HID
+
 idle:
   timeout_ms: 30000          # 30 second timeout
   ambient_profile: slow_fade # Choose: slow_fade, minimal, meditative  

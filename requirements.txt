@@ -4,3 +4,5 @@ python-osc
 prometheus-client
 pyyaml
 pydantic
+pygame
+hidapi

@@ -18,9 +18,29 @@ midi:
     parameter_smoothing: true       # Enable parameter smoothing for CC messages
     cc_throttle_ms: 10              # Minimum milliseconds between CC messages (latency optimization)
 
+# HID Input Configuration (arcade buttons + joystick)
+hid:
+  device_name: "Generic USB Joystick"
+  button_mapping:
+    0: "trigger_step"    # Button 0 -> trigger_step (maps to MIDI note 60)
+    1: "trigger_step"    # Button 1 -> trigger_step (maps to MIDI note 61)
+    2: "trigger_step"    # Button 2 -> trigger_step (maps to MIDI note 62)
+    3: "trigger_step"    # Button 3 -> trigger_step (maps to MIDI note 63)
+    4: "trigger_step"    # Button 4 -> trigger_step (maps to MIDI note 64)
+    5: "trigger_step"    # Button 5 -> trigger_step (maps to MIDI note 65)
+    6: "trigger_step"    # Button 6 -> trigger_step (maps to MIDI note 66)
+    7: "trigger_step"    # Button 7 -> trigger_step (maps to MIDI note 67)
+    8: "trigger_step"    # Button 8 -> trigger_step (maps to MIDI note 68)
+    9: "trigger_step"    # Button 9 -> trigger_step (maps to MIDI note 69)
+  joystick_mapping:
+    up: "osc_a"         # Joystick Up -> osc_a (maps to MIDI CC 50)
+    down: "osc_b"       # Joystick Down -> osc_b (maps to MIDI CC 51)
+    left: "mod_a"       # Joystick Left -> mod_a (maps to MIDI CC 52)  
+    right: "mod_b"      # Joystick Right -> mod_b (maps to MIDI CC 53)
+
+# MIDI Input Mapping (from Teensy - potentiometers and switches only now)
 mapping:
-  buttons:
-    "60-69": trigger_step
+  buttons: {}  # Empty - buttons now handled by HID
   ccs:
     "2": sequence_length
     "27": tempo
@@ -30,10 +50,7 @@ mapping:
     "24": eg_release         # K4 -> NTS-1 EG Release (CC 19)
     "25": reverb_mix         # K5 -> NTS-1 Reverb Mix (CC 36)
     "26": delay_mix          # K6 -> NTS-1 Delay Mix (CC 33)
-    "50": osc_a              # Joystick Up -> NTS-1 OSC A (CC 54)
-    "51": osc_b              # Joystick Down -> NTS-1 OSC B (CC 55)
-    "52": mod_a              # Joystick Left -> NTS-1 MOD A (CC 28)
-    "53": mod_b              # Joystick Right -> NTS-1 MOD B (CC 29)
+    # No joystick mappings - now handled by HID
     "60": osc_type           # S1 -> NTS-1 OSC Type (CC 53)
     "61": filter_type        # S2 -> NTS-1 Filter Type (CC 42)
     "62": mod_type           # S3 -> NTS-1 MOD Type (CC 88)
