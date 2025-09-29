@@ -56,12 +56,24 @@ class SynthConfig(BaseModel):
 class LoggingConfig(BaseModel):
     level: str = Field("INFO", pattern=r"^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$")
 
+class HidConfig(BaseModel):
+    """HID device configuration for arcade buttons and joystick."""
+    device_name: str = "Generic USB Joystick"
+    button_mapping: Dict[int, str] = Field(default_factory=lambda: {i: "trigger_step" for i in range(10)})
+    joystick_mapping: Dict[str, str] = Field(default_factory=lambda: {
+        "up": "osc_a",
+        "down": "osc_b", 
+        "left": "mod_a",
+        "right": "mod_b"
+    })
+
 class ApiConfig(BaseModel):
     enabled: bool = True
     port: int = 8080
 
 class RootConfig(BaseModel):
     midi: MidiConfig = MidiConfig()
+    hid: HidConfig = HidConfig()
     mapping: Dict[str, Dict[str, str]] = Field(default_factory=dict)
     sequencer: SequencerConfig = SequencerConfig()
     scales: List[str] = Field(default_factory=lambda: ["major", "minor", "pentatonic"])

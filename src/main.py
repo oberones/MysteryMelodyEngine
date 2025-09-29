@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from config import load_config
 from router import Router
 from midi_in import MidiInput
+from hybrid_input import HybridInput
 from midi_out import MidiOutput, NullMidiOutput
 from events import SemanticEvent
 from logging_utils import configure_logging
@@ -113,6 +114,11 @@ def main(argv: Optional[list[str]] = None):
     log.info(f"midi_output_port={cfg.midi.output_port}")
     log.info(f"midi_input_channel={cfg.midi.input_channel}")
     log.info(f"midi_output_channel={cfg.midi.output_channel}")
+    
+    # HID Configuration
+    log.info(f"hid_device_name={cfg.hid.device_name}")
+    log.info(f"hid_button_mapping={cfg.hid.button_mapping}")
+    log.info(f"hid_joystick_mapping={cfg.hid.joystick_mapping}")
     
     # Phase 7: MIDI Clock Configuration
     log.info(f"midi_clock_enabled={cfg.midi.clock.enabled}")
@@ -286,10 +292,14 @@ def main(argv: Optional[list[str]] = None):
         action_handler.handle_semantic_event(evt)
 
     router = Router(cfg, handle_semantic)
+    
+    # Use hybrid input system for both HID and MIDI inputs
     try:
-        midi = MidiInput.create(cfg.midi.input_port, router.route)
-    except Exception as e:  # noqa: broad-except
-        log.error("midi_open_failed error=%s", e)
+        hybrid_input = HybridInput.create_from_config(cfg, router.route, handle_semantic)
+        hybrid_input.start()
+        log.info("Hybrid input system started (HID + MIDI)")
+    except Exception as e:
+        log.error("hybrid_input_failed error=%s", e)
         return 2
 
     # Start sequencer
@@ -327,7 +337,7 @@ def main(argv: Optional[list[str]] = None):
             idle_manager.stop()
             external_hardware.stop()  # Stop external hardware manager
             note_scheduler.stop()
-            midi.close()
+            hybrid_input.stop()  # Stop hybrid input system
             if midi_output:
                 midi_output.close()
         except Exception:  # noqa: broad-except

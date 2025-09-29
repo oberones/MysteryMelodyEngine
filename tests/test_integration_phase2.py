@@ -135,6 +135,10 @@ def test_sequencer_clock_integration(integrated_system):
     system['state'].set('bpm', 960.0)  # Very fast
     system['state'].set('sequence_length', 4)
     
+    # Set up step pattern for note generation (required since Phase 5.5)
+    system['sequencer'].set_step_pattern([True, True, True, True])  # All steps active
+    system['sequencer'].set_step_probabilities([1.0, 1.0, 1.0, 1.0])  # 100% probability
+    
     # Start sequencer
     system['sequencer'].start()
     
