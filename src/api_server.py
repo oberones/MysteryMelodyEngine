@@ -346,7 +346,7 @@ class APIServer:
         try:
             config = uvicorn.Config(
                 self.app,
-                host="0.0.0.0",
+                host=self.config.api.host,
                 port=self.config.api.port,
                 log_level="info" if log.isEnabledFor(logging.INFO) else "warning",
                 access_log=True

@@ -509,6 +509,48 @@ api:
 
 For complete API documentation, see [`docs/API_DOCUMENTATION.md`](docs/API_DOCUMENTATION.md).
 
+## Command Line Interface 🖥️ **NEW**
+
+A powerful CLI client provides easy command-line access to the API for automation and live control.
+
+### Quick Start
+```bash
+# Show system status
+./mme-cli status
+
+# Change BPM quickly
+./mme-cli quick bpm 140
+
+# Monitor in real-time
+./mme-cli monitor
+
+# Trigger pattern changes
+./mme-cli event trigger set_direction_pattern ping_pong
+
+# Get/set any configuration
+./mme-cli config get sequencer.density
+./mme-cli config set sequencer.density 0.75
+```
+
+### Features
+- **Intuitive commands**: `status`, `config`, `state`, `event`, `monitor`, `quick`
+- **Auto-completion**: Bash completion for commands and parameters
+- **Real-time monitoring**: Live system state updates
+- **Error handling**: Clear error messages and connection diagnostics
+- **Remote control**: Connect to any MME instance via URL
+- **Scripting friendly**: Perfect for automation and macros
+
+### Installation
+```bash
+# Make executable (one-time setup)
+chmod +x mme-cli mme-cli.py
+
+# Enable auto-completion (optional)
+source mme-cli-completion.bash
+```
+
+For complete CLI documentation, see [`docs/CLI_DOCUMENTATION.md`](docs/CLI_DOCUMENTATION.md).
+
 ### Idle Mode Control (Phase 6) 🌙
 ```python
 # Manual idle mode control (for testing/debugging)

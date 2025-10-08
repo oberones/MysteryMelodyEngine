@@ -16,6 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Semantic event triggering via API
   - Python client example and interactive demo
   - Comprehensive API documentation
+- **Command Line Interface**: Powerful CLI client for API interaction
+  - Intuitive command structure with subcommands
+  - Real-time monitoring with live updates
+  - Quick commands for common parameter changes
+  - Bash auto-completion support
+  - Remote server support and error handling
+  - Scripting-friendly design for automation
+  - Comprehensive CLI documentation
 
 ### Changed
 - Enhanced configuration system to support runtime updates

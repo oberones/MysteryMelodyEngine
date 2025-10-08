@@ -192,7 +192,7 @@ class TestAPIIntegration:
                 if response.status_code == 200:
                     server_started = True
                     break
-            except:
+            except Exception:
                 time.sleep(0.1)
         
         if not server_started:
