@@ -453,6 +453,104 @@ state.set('note_probability', 0.7)  # Applied to all steps when step_probabiliti
 # Hardcoded even-step pattern used when step_pattern is None
 ```
 
+## Dynamic Configuration API 🌐 **NEW**
+
+The engine now includes a REST API for real-time configuration changes without requiring a restart.
+
+### Features
+- **Real-time updates**: Modify any configuration parameter while the engine runs
+- **Validation**: All changes are validated before application
+- **System state**: Monitor internal state and trigger events
+- **Auto-documentation**: Interactive API docs at `/docs`
+
+### Quick Start
+```bash
+# Start the engine (API enabled by default on port 8080)
+python src/main.py --config config.yaml
+
+# In another terminal - update BPM
+curl -X POST http://localhost:8080/config \
+  -H "Content-Type: application/json" \
+  -d '{"path": "sequencer.bpm", "value": 120.0}'
+
+# Change sequencer direction
+curl -X POST "http://localhost:8080/actions/semantic?action=set_direction_pattern&value=ping_pong"
+
+# Get current state
+curl http://localhost:8080/state
+```
+
+### Python Client Example
+```python
+from examples.api_demo import APIClient
+
+client = APIClient("http://localhost:8080")
+
+# Update configuration
+client.update_config("sequencer.density", 0.8)
+client.update_config("mutation.interval_min_s", 45)
+
+# Trigger events
+client.trigger_semantic_event("set_direction_pattern", "random")
+
+# Monitor state
+state = client.get_state()
+print(f"Current BPM: {state['bpm']}")
+```
+
+### API Configuration
+```yaml
+api:
+  enabled: true
+  port: 8080
+  host: "0.0.0.0"    # Set to "127.0.0.1" for localhost-only
+  log_level: "info"
+```
+
+For complete API documentation, see [`docs/API_DOCUMENTATION.md`](docs/API_DOCUMENTATION.md).
+
+## Command Line Interface 🖥️ **NEW**
+
+A powerful CLI client provides easy command-line access to the API for automation and live control.
+
+### Quick Start
+```bash
+# Show system status
+./mme-cli status
+
+# Change BPM quickly
+./mme-cli quick bpm 140
+
+# Monitor in real-time
+./mme-cli monitor
+
+# Trigger pattern changes
+./mme-cli event trigger set_direction_pattern ping_pong
+
+# Get/set any configuration
+./mme-cli config get sequencer.density
+./mme-cli config set sequencer.density 0.75
+```
+
+### Features
+- **Intuitive commands**: `status`, `config`, `state`, `event`, `monitor`, `quick`
+- **Auto-completion**: Bash completion for commands and parameters
+- **Real-time monitoring**: Live system state updates
+- **Error handling**: Clear error messages and connection diagnostics
+- **Remote control**: Connect to any MME instance via URL
+- **Scripting friendly**: Perfect for automation and macros
+
+### Installation
+```bash
+# Make executable (one-time setup)
+chmod +x mme-cli mme-cli.py
+
+# Enable auto-completion (optional)
+source mme-cli-completion.bash
+```
+
+For complete CLI documentation, see [`docs/CLI_DOCUMENTATION.md`](docs/CLI_DOCUMENTATION.md).
+
 ### Idle Mode Control (Phase 6) 🌙
 ```python
 # Manual idle mode control (for testing/debugging)

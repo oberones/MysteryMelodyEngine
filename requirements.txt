@@ -6,3 +6,6 @@ pyyaml
 pydantic
 pygame
 hidapi
+fastapi
+uvicorn
+requests

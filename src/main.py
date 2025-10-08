@@ -18,6 +18,7 @@ from mutation import create_mutation_engine
 from idle import create_idle_manager
 from cc_profiles import load_custom_profiles
 from note_utils import format_note_with_number, format_rest
+from api_server import create_api_server
 
 
 @dataclass
@@ -293,6 +294,12 @@ def main(argv: Optional[list[str]] = None):
 
     router = Router(cfg, handle_semantic)
     
+    # Initialize API server if enabled
+    api_server = create_api_server(cfg, handle_semantic)
+    if api_server:
+        api_server.start()
+        log.info(f"API server started on port {cfg.api.port}")
+    
     # Use hybrid input system for both HID and MIDI inputs
     try:
         hybrid_input = HybridInput.create_from_config(cfg, router.route, handle_semantic)
@@ -338,6 +345,8 @@ def main(argv: Optional[list[str]] = None):
             external_hardware.stop()  # Stop external hardware manager
             note_scheduler.stop()
             hybrid_input.stop()  # Stop hybrid input system
+            if api_server:
+                api_server.stop()  # Stop API server
             if midi_output:
                 midi_output.close()
         except Exception:  # noqa: broad-except
