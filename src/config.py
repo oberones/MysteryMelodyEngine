@@ -70,6 +70,8 @@ class HidConfig(BaseModel):
 class ApiConfig(BaseModel):
     enabled: bool = True
     port: int = 8080
+    host: str = "0.0.0.0"
+    log_level: str = "info"
 
 class RootConfig(BaseModel):
     midi: MidiConfig = MidiConfig()

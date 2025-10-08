@@ -14,7 +14,7 @@ import logging
 from pathlib import Path
 
 # Add src to path for local imports
-sys.path.insert(0, str(Path(__file__).parent / 'src'))
+sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
 from events import SemanticEvent
 from config import load_config

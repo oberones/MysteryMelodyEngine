@@ -9,7 +9,7 @@ midi:
   output_channel: 12
 
   clock:
-    enabled: false            # Enable MIDI clock output to sync external devices
+    enabled: true            # Enable MIDI clock output to sync external devices
     send_start_stop: true     # Send MIDI start/stop messages  
     send_song_position: true  # Send song position pointer messages
 
@@ -95,3 +95,10 @@ idle:
   fade_out_ms: 800
   smooth_bpm_transitions: true
   bpm_transition_duration_s: 30
+
+# API Configuration for dynamic configuration management
+api:
+  enabled: true
+  port: 8080
+  host: "0.0.0.0"
+  log_level: "info"

@@ -63,6 +63,10 @@ class ActionHandler:
             'mode': self._handle_mode,
             'palette': self._handle_palette,
             'drift': self._handle_drift,
+            # API-specific actions
+            'set_direction_pattern': self._handle_set_direction_pattern,
+            'set_step_pattern': self._handle_set_step_pattern,
+            'reload_cc_profile': self._handle_reload_cc_profile,
         }
     
     def set_sequencer(self, sequencer: Sequencer):
@@ -342,3 +346,34 @@ class ActionHandler:
             # Map CC value (0-127) to probability (0.0-1.0)
             probability = event.value / 127.0
             self.state.set('note_probability', probability, source='midi')
+    
+    def _handle_set_direction_pattern(self, event: SemanticEvent):
+        """Handle setting direction pattern via API."""
+        if event.value and self.sequencer:
+            try:
+                self.sequencer.set_direction_pattern(event.value)
+                log.info(f"Direction pattern set to: {event.value}")
+            except Exception as e:
+                log.error(f"Failed to set direction pattern '{event.value}': {e}")
+    
+    def _handle_set_step_pattern(self, event: SemanticEvent):
+        """Handle setting step pattern via API.""" 
+        if event.value and self.sequencer:
+            try:
+                if hasattr(self.sequencer, 'get_pattern_preset'):
+                    pattern = self.sequencer.get_pattern_preset(event.value)
+                    self.sequencer.set_step_pattern(pattern)
+                    log.info(f"Step pattern set to: {event.value}")
+                else:
+                    log.warning("Sequencer does not support step patterns")
+            except Exception as e:
+                log.error(f"Failed to set step pattern '{event.value}': {e}")
+    
+    def _handle_reload_cc_profile(self, event: SemanticEvent):
+        """Handle reloading CC profile via API."""
+        if self._external_hardware:
+            try:
+                self._external_hardware.reload_profile()
+                log.info("CC profile reloaded successfully")
+            except Exception as e:
+                log.error(f"Failed to reload CC profile: {e}")
