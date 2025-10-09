@@ -10,7 +10,7 @@ Group=audio
 WorkingDirectory={{ rpi_dir }}
 Environment=PATH={{ venv_dir }}/bin
 ExecStartPre=/bin/bash -c 'modprobe snd-seq || true'
-ExecStart={{ rpi_dir }}/start-mystery-music.sh
+ExecStart={{ rpi_dir }}/start-mystery-music-engine.sh
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=mixed
 KillSignal=SIGTERM

@@ -155,7 +155,7 @@
 
     - name: Create startup script
       template:
-        src: start-mystery-music.sh.j2
+        src: start-mystery-music-engine.sh.j2
         dest: "{{ rpi_dir }}/start-mystery-music-engine.sh"
         owner: "{{ pi_user }}"
         group: "{{ pi_user }}"
