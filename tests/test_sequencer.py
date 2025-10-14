@@ -185,6 +185,40 @@ def test_sequencer_note_generation(state):
         assert isinstance(note.step, int)
 
 
+def test_clock_large_tick_count_stability():
+    """Test that clock remains stable with very large tick counts.
+    
+    This tests the fix for the issue where the sequencer would stop
+    generating notes after ~2 hours due to floating-point precision
+    problems with large tick counts.
+    """
+    clock = HighResClock(bpm=240.0, ppq=4)  # Fast for testing
+    received_ticks = []
+    
+    def tick_callback(tick):
+        received_ticks.append(tick)
+        if len(received_ticks) >= 20:  # Stop after reasonable number
+            clock.stop()
+    
+    clock.set_tick_callback(tick_callback)
+    clock.start()
+    
+    # Simulate large tick count (equivalent to ~2+ hours runtime)
+    clock._tick_count = 10_000_000
+    
+    # Let it run briefly
+    timeout = 2.0
+    start_time = time.time()
+    while clock._running and (time.time() - start_time) < timeout:
+        time.sleep(0.01)
+    
+    if clock._running:
+        clock.stop()
+    
+    # Should have received ticks despite large tick count
+    assert len(received_ticks) >= 10, f"Expected at least 10 ticks, got {len(received_ticks)}"
+
+
 def test_sequencer_integration(state):
     """Test full sequencer integration with clock."""
     scales = ['major', 'minor']

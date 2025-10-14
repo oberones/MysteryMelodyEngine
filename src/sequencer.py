@@ -93,11 +93,15 @@ class HighResClock:
     
     def _clock_thread(self):
         """Main clock thread with drift correction."""
+        next_tick_time = self._start_time
+        
         while self._running:
             tick_interval = 60.0 / (self.bpm * self.ppq)
             
-            # Calculate target time for this tick
-            target_time = self._start_time + (self._tick_count * tick_interval)
+            # Calculate target time for this tick using incremental approach
+            # This avoids floating-point precision issues with large tick counts
+            next_tick_time += tick_interval
+            target_time = next_tick_time
             
             # Apply swing to odd-numbered 16th note ticks
             # Swing affects every other ppq/4 tick (assuming ppq=24, every 6th tick)
@@ -123,6 +127,12 @@ class HighResClock:
                 self._drift_accumulator += sleep_time
                 # Limit drift accumulation to prevent runaway
                 self._drift_accumulator = max(-0.01, min(0.01, self._drift_accumulator))
+                
+                # If we're consistently behind, reset timing to prevent spiral
+                if sleep_time < -0.1:  # More than 100ms behind
+                    log.warning(f"Clock timing reset due to drift (behind by {-sleep_time:.3f}s)")
+                    next_tick_time = current_time
+                    self._drift_accumulator = 0.0
             
             # Emit tick event
             if self._tick_callback:
