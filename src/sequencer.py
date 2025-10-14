@@ -727,8 +727,9 @@ class Sequencer:
         
         if is_active_step and random.random() < step_prob:
             # Use scale mapper to get the note
-            # Simple mapping: step number maps to scale degree
-            degree = step // 2 
+            # 1:1 mapping: each step gets its own scale degree
+            sequence_length = self.state.get('sequence_length', 8)
+            degree = step % sequence_length
             note = self.scale_mapper.get_note(degree, octave=0)
             
             # Phase 5.5: Velocity variation based on probability values

@@ -9,7 +9,7 @@ import os
 import time
 
 # Add src directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from config import load_config
 from state import get_state, reset_state
@@ -125,7 +125,7 @@ def demo_sequencer_integration():
         step_notes = []
         for step in range(8):
             # Simulate the sequencer's note generation logic
-            degree = step // 2  # From sequencer._generate_step_note
+            degree = step % 8  # Updated to match sequencer._generate_step_note
             note = sequencer.scale_mapper.get_note(degree, octave=0)
             note_name = note_to_name(note)
             step_notes.append(f"Step {step}: {note_name}({note})")

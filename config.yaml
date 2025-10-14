@@ -6,7 +6,7 @@ midi:
   output_port: "RK006 OUT_ALL"  # Set to "auto" or specific port name to enable MIDI output
 
   input_channel: 1
-  output_channel: 12
+  output_channel: 14
 
   clock:
     enabled: true            # Enable MIDI clock output to sync external devices
@@ -14,7 +14,7 @@ midi:
     send_song_position: true  # Send song position pointer messages
 
   cc_profile:
-    active_profile: "roland_jx08" # Active CC profile (korg_nts1_mk2, roland_jx08, waldorf_streichfett, generic_analog, fm_synth)
+    active_profile: "korg_nts1_mk2" # Active CC profile (korg_nts1_mk2, roland_jx08, waldorf_streichfett, generic_analog, fm_synth)
     parameter_smoothing: true       # Enable parameter smoothing for CC messages
     cc_throttle_ms: 10              # Minimum milliseconds between CC messages (latency optimization)
 
@@ -56,19 +56,20 @@ mapping:
     "62": mod_type           # S3 -> NTS-1 MOD Type (CC 88)
 
 sequencer:
-  steps: 4
-  bpm: 85
+  steps: 8
+  bpm: 45
   swing: 0.09
-  density: .86
-  root_note: 50            # MIDI note number for scale root (C4 = 60, C# = 61, D = 62, etc.)
-  gate_length: 1           # Note duration as fraction of step duration (0.1-1.0)
+  density: 1.0              # Note density (0.0-1.0)
+  root_note: 60                # MIDI note number for scale root (C4 = 60, C# = 61, D = 62, etc.)
+  gate_length: 1               # Note duration as fraction of step duration (0.1-1.0)
   quantize_scale_changes: bar
-  step_pattern: all_on # syncopated | four_on_the_floor | all_on
-  direction_pattern: song # forward | backward | ping_pong | random | fugue | song
-  voices: 3                # Number of voices for fugue mode (1-4, where 1 = monophonic)
+  step_pattern: all_on         # syncopated | four_on_the_floor | all_on
+  direction_pattern: forward   # forward | backward | ping_pong | random | fugue | song
+  voices: 1                    # Number of voices for fugue mode (1-4, where 1 = monophonic)
 
 
 scales:
+  - major
   - minor
   - blues
   - pentatonic_major
@@ -76,23 +77,22 @@ scales:
   - mixolydian
   - dorian
   - locrian
-  - major
 
 mutation:
   interval_min_s: 30
   interval_max_s: 60
-  max_changes_per_cycle: 5
+  max_changes_per_cycle: 3
   
   # NTS-1 Plugin Configuration (auto-loaded when korg_nts1_mk2 profile is active)
   nts1_plugin:
-    style: "default"              # Options: "default", "ambient", "rhythmic"
-    replace_default_rules: false   # Replace built-in rules with NTS-1 specific ones
+    style: "ambient"              # Options: "default", "ambient", "rhythmic"
+    replace_default_rules: true   # Replace built-in rules with NTS-1 specific ones
 
 idle:
-  timeout_ms: 30000
-  ambient_profile: meditative # slow_fade | meditative
-  fade_in_ms: 4000
-  fade_out_ms: 800
+  timeout_ms: 300000
+  ambient_profile: meditative # slow_fade | meditative | rhythmic
+  fade_in_ms: 30000
+  fade_out_ms: 8000
   smooth_bpm_transitions: true
   bpm_transition_duration_s: 30
 
