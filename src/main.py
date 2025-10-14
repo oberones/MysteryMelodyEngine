@@ -144,6 +144,7 @@ def main(argv: Optional[list[str]] = None):
     log.info(f"sequencer_step_pattern={cfg.sequencer.step_pattern}")
     log.info(f"sequencer_direction_pattern={cfg.sequencer.direction_pattern}")
     log.info(f"sequencer_voices={cfg.sequencer.voices}")
+    log.info(f"sequencer_note_division={cfg.sequencer.note_division}")
     
     # Scales
     log.info(f"available_scales={cfg.scales}")
@@ -189,6 +190,7 @@ def main(argv: Optional[list[str]] = None):
         'root_note': cfg.sequencer.root_note,
         'gate_length': cfg.sequencer.gate_length,
         'voices': cfg.sequencer.voices,
+        'note_division': cfg.sequencer.note_division,
         'smooth_idle_transitions': cfg.idle.smooth_bpm_transitions,
         'idle_transition_duration_s': cfg.idle.bpm_transition_duration_s,
     }, source='config')

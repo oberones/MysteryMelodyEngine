@@ -35,6 +35,7 @@ class SequencerConfig(BaseModel):
     step_pattern: Optional[str] = None
     direction_pattern: str = "forward"  # forward | backward | ping_pong | random | fugue | song
     voices: int = Field(3, ge=1, le=4)  # Number of voices for fugue mode (1-4)
+    note_division: str = Field("sixteenth", pattern=r"^(whole|half|quarter|eighth|sixteenth)$")  # Note division per step
 
 class MutationConfig(BaseModel):
     interval_min_s: int = 120

@@ -114,6 +114,18 @@ class APIServer:
             """Get the complete current configuration."""
             return self.config.model_dump()
         
+        @self.app.get("/config/schema")
+        async def get_config_schema():
+            """Get the configuration schema for validation."""
+            return RootConfig.model_json_schema()
+        
+        @self.app.get("/config/mappings")
+        async def get_supported_mappings():
+            """Get information about supported configuration paths and their types."""
+            schema = RootConfig.model_json_schema()
+            self._root_schema = schema  # Store for reference resolution
+            return self._extract_schema_paths(schema)
+        
         @self.app.get("/config/{config_path:path}", response_model=ConfigGetResponse)
         async def get_config_value(config_path: str):
             """Get a specific configuration value by path."""
@@ -179,17 +191,6 @@ class APIServer:
             from state import reset_state
             reset_state()
             return {"message": "System state reset successfully"}
-        
-        @self.app.get("/config/schema")
-        async def get_config_schema():
-            """Get the configuration schema for validation."""
-            return RootConfig.model_json_schema()
-        
-        @self.app.get("/config/mappings")
-        async def get_supported_mappings():
-            """Get information about supported configuration paths and their types."""
-            schema = RootConfig.model_json_schema()
-            return self._extract_schema_paths(schema)
         
         @self.app.post("/actions/semantic")
         async def trigger_semantic_event(
@@ -292,23 +293,35 @@ class APIServer:
         """Extract all possible configuration paths from the schema."""
         paths = {}
         
+        # Helper function to resolve $ref references
+        def resolve_ref(ref_schema: Dict[str, Any], root_schema: Dict[str, Any]) -> Dict[str, Any]:
+            if "$ref" in ref_schema:
+                ref_path = ref_schema["$ref"]
+                if ref_path.startswith("#/$defs/"):
+                    def_name = ref_path[8:]  # Remove "#/$defs/"
+                    return root_schema.get("$defs", {}).get(def_name, {})
+            return ref_schema
+        
         if "properties" in schema:
             for prop_name, prop_schema in schema["properties"].items():
                 current_path = f"{prefix}.{prop_name}" if prefix else prop_name
                 
-                if prop_schema.get("type") == "object" and "properties" in prop_schema:
+                # Resolve any $ref references
+                resolved_schema = resolve_ref(prop_schema, schema if not prefix else self._root_schema)
+                
+                if resolved_schema.get("type") == "object" and "properties" in resolved_schema:
                     # Recursively handle nested objects
-                    nested_paths = self._extract_schema_paths(prop_schema, current_path)
+                    nested_paths = self._extract_schema_paths(resolved_schema, current_path)
                     paths.update(nested_paths)
                 else:
                     # Leaf property
                     paths[current_path] = {
-                        "type": prop_schema.get("type", "unknown"),
-                        "description": prop_schema.get("description", ""),
-                        "default": prop_schema.get("default"),
-                        "enum": prop_schema.get("enum"),
-                        "minimum": prop_schema.get("minimum"),
-                        "maximum": prop_schema.get("maximum"),
+                        "type": resolved_schema.get("type", "unknown"),
+                        "description": resolved_schema.get("description", ""),
+                        "default": resolved_schema.get("default"),
+                        "enum": resolved_schema.get("enum"),
+                        "minimum": resolved_schema.get("minimum"),
+                        "maximum": resolved_schema.get("maximum"),
                     }
         
         return paths

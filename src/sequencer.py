@@ -93,11 +93,15 @@ class HighResClock:
     
     def _clock_thread(self):
         """Main clock thread with drift correction."""
+        next_tick_time = self._start_time
+        
         while self._running:
             tick_interval = 60.0 / (self.bpm * self.ppq)
             
-            # Calculate target time for this tick
-            target_time = self._start_time + (self._tick_count * tick_interval)
+            # Calculate target time for this tick using incremental approach
+            # This avoids floating-point precision issues with large tick counts
+            next_tick_time += tick_interval
+            target_time = next_tick_time
             
             # Apply swing to odd-numbered 16th note ticks
             # Swing affects every other ppq/4 tick (assuming ppq=24, every 6th tick)
@@ -123,6 +127,12 @@ class HighResClock:
                 self._drift_accumulator += sleep_time
                 # Limit drift accumulation to prevent runaway
                 self._drift_accumulator = max(-0.01, min(0.01, self._drift_accumulator))
+                
+                # If we're consistently behind, reset timing to prevent spiral
+                if sleep_time < -0.1:  # More than 100ms behind
+                    log.warning(f"Clock timing reset due to drift (behind by {-sleep_time:.3f}s)")
+                    next_tick_time = current_time
+                    self._drift_accumulator = 0.0
             
             # Emit tick event
             if self._tick_callback:
@@ -154,7 +164,7 @@ class Sequencer:
         self.clock = HighResClock()
         self._note_callback: Optional[Callable[[NoteEvent], None]] = None
         self._current_step = 0
-        self._steps_per_beat = 4  # 16th notes
+        self._steps_per_beat = 4  # Default to 16th notes, will be updated from state
         self._ticks_per_step = 0
         self._tick_counter = 0
         
@@ -190,6 +200,53 @@ class Sequencer:
         self.clock.set_tick_callback(self._on_tick)
         
         log.info("sequencer_initialized")
+    
+    def _get_steps_per_beat_from_division(self, note_division: str) -> int:
+        """Calculate steps per beat based on note division.
+        
+        Args:
+            note_division: Note division ('whole', 'half', 'quarter', 'eighth', 'sixteenth')
+            
+        Returns:
+            Number of steps per quarter note beat
+        """
+        division_map = {
+            'whole': 0.25,      # 1 whole note = 4 quarter notes, so 0.25 steps per quarter
+            'half': 0.5,        # 1 half note = 2 quarter notes, so 0.5 steps per quarter  
+            'quarter': 1,       # 1 quarter note = 1 quarter note, so 1 step per quarter
+            'eighth': 2,        # 2 eighth notes = 1 quarter note, so 2 steps per quarter
+            'sixteenth': 4      # 4 sixteenth notes = 1 quarter note, so 4 steps per quarter
+        }
+        
+        steps_per_beat = division_map.get(note_division, 4)  # Default to sixteenth notes
+        
+        # For whole and half notes, we need to adjust the calculation since we can't have
+        # fractional steps. Instead, we'll slow down the effective step rate.
+        if note_division == 'whole':
+            return 1  # 1 step per 4 quarter notes (handled in timing calculation)
+        elif note_division == 'half':
+            return 1  # 1 step per 2 quarter notes (handled in timing calculation)
+        else:
+            return int(steps_per_beat)
+    
+    def _get_beat_multiplier_from_division(self, note_division: str) -> float:
+        """Get beat multiplier for whole and half note divisions.
+        
+        Args:
+            note_division: Note division string
+            
+        Returns:
+            Multiplier for beat timing (1.0 for normal timing)
+        """
+        multiplier_map = {
+            'whole': 4.0,       # Each step lasts 4 quarter notes
+            'half': 2.0,        # Each step lasts 2 quarter notes
+            'quarter': 1.0,     # Each step lasts 1 quarter note
+            'eighth': 1.0,      # Normal timing (handled by steps_per_beat)
+            'sixteenth': 1.0    # Normal timing (handled by steps_per_beat)
+        }
+        
+        return multiplier_map.get(note_division, 1.0)
     
     def set_step_probabilities(self, probabilities: List[float]):
         """Set per-step probability array.
@@ -509,10 +566,24 @@ class Sequencer:
         """Update clock parameters from current state."""
         bpm = self.state.get('bpm', 110.0)
         swing = self.state.get('swing', 0.0)
+        note_division = self.state.get('note_division', 'sixteenth')
+        
+        # Update steps per beat based on note division
+        self._steps_per_beat = self._get_steps_per_beat_from_division(note_division)
+        
+        # Apply beat multiplier for whole and half notes
+        beat_multiplier = self._get_beat_multiplier_from_division(note_division)
+        effective_bpm = bpm / beat_multiplier
         
         self._ticks_per_step = self.clock.ppq // self._steps_per_beat
         
-        self.clock.update_params(bpm=bpm, swing=swing)
+        # Ensure we have at least 1 tick per step
+        if self._ticks_per_step < 1:
+            self._ticks_per_step = 1
+        
+        self.clock.update_params(bpm=effective_bpm, swing=swing)
+        
+        log.debug(f"clock_timing_updated note_division={note_division} steps_per_beat={self._steps_per_beat} effective_bpm={effective_bpm:.1f} ticks_per_step={self._ticks_per_step}")
 
     def _update_scale_from_state(self, force: bool = False):
         """Update the scale mapper from the current state."""
@@ -556,7 +627,7 @@ class Sequencer:
                 self._bpm_transition_active = False
                 self._update_clock_from_state()
             # Otherwise ignore (transition is handling it)
-        elif change.parameter == 'swing':
+        elif change.parameter in ('swing', 'note_division'):
             self._update_clock_from_state()
         elif change.parameter in ('scale_index', 'root_note'):
             self._update_scale_from_state()
@@ -727,8 +798,9 @@ class Sequencer:
         
         if is_active_step and random.random() < step_prob:
             # Use scale mapper to get the note
-            # Simple mapping: step number maps to scale degree
-            degree = step // 2 
+            # 1:1 mapping: each step gets its own scale degree
+            sequence_length = self.state.get('sequence_length', 8)
+            degree = step % sequence_length
             note = self.scale_mapper.get_note(degree, octave=0)
             
             # Phase 5.5: Velocity variation based on probability values
