@@ -197,8 +197,15 @@ def cmd_config_list(client: MMEClient, args: argparse.Namespace) -> None:
     for category, paths in sorted(categories.items()):
         print(f"\n{category.upper()}:")
         for path, info in sorted(paths):
-            type_info = info.get('type', 'unknown')
-            desc = info.get('description', '')
+            # Handle case where info might be a boolean or other non-dict type
+            if isinstance(info, dict):
+                type_info = info.get('type', 'unknown')
+                desc = info.get('description', '')
+            else:
+                # If info is not a dict, treat it as a simple value
+                type_info = type(info).__name__
+                desc = ''
+            
             if desc:
                 print(f"  {path:30} ({type_info}) - {desc}")
             else:

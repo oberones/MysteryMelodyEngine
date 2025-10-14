@@ -14,7 +14,7 @@ midi:
     send_song_position: true  # Send song position pointer messages
 
   cc_profile:
-    active_profile: "korg_nts1_mk2" # Active CC profile (korg_nts1_mk2, roland_jx08, waldorf_streichfett, generic_analog, fm_synth)
+    active_profile: "roland_jx08" # Active CC profile (korg_nts1_mk2, roland_jx08, waldorf_streichfett, generic_analog, fm_synth)
     parameter_smoothing: true       # Enable parameter smoothing for CC messages
     cc_throttle_ms: 10              # Minimum milliseconds between CC messages (latency optimization)
 
@@ -57,15 +57,16 @@ mapping:
 
 sequencer:
   steps: 8
-  bpm: 45
+  bpm: 120
   swing: 0.09
-  density: 1.0              # Note density (0.0-1.0)
-  root_note: 60                # MIDI note number for scale root (C4 = 60, C# = 61, D = 62, etc.)
-  gate_length: 1               # Note duration as fraction of step duration (0.1-1.0)
+  density: .65                # Note density (0.0-1.0)
+  root_note: 60               # MIDI note number for scale root (C4 = 60, C# = 61, D = 62, etc.)
+  gate_length: 1              # Note duration as fraction of step duration (0.1-1.0)
   quantize_scale_changes: bar
-  step_pattern: all_on         # syncopated | four_on_the_floor | all_on
-  direction_pattern: forward   # forward | backward | ping_pong | random | fugue | song
-  voices: 1                    # Number of voices for fugue mode (1-4, where 1 = monophonic)
+  step_pattern: syncopated        # syncopated | four_on_the_floor | all_on
+  direction_pattern: song  # forward | backward | ping_pong | random | fugue | song
+  voices: 3                   # Number of voices for fugue mode (1-4, where 1 = monophonic)
+  note_division: quarter      # Note value per step: whole | half | quarter | eighth | sixteenth
 
 
 scales:
@@ -91,8 +92,8 @@ mutation:
 idle:
   timeout_ms: 300000
   ambient_profile: meditative # slow_fade | meditative | rhythmic
-  fade_in_ms: 30000
-  fade_out_ms: 8000
+  fade_in_ms: 10000
+  fade_out_ms: 1000
   smooth_bpm_transitions: true
   bpm_transition_duration_s: 30
 

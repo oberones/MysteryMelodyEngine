@@ -312,8 +312,8 @@ class CCProfileRegistry:
             parameters={
                 # Standard MIDI Controls
                 "modulation_wheel": CCParameter(cc=1, range=(0, 127), curve=CurveType.LINEAR, name="Modulation Wheel"),
-                "portamento_time": CCParameter(cc=5, range=(0, 127), curve=CurveType.EXPONENTIAL, name="Portamento Time"),
-                "portamento_time_alt": CCParameter(cc=117, range=(0, 127), curve=CurveType.EXPONENTIAL, name="Portamento Time Alt"),
+                # "portamento_time": CCParameter(cc=5, range=(0, 127), curve=CurveType.EXPONENTIAL, name="Portamento Time"),
+                # "portamento_time_alt": CCParameter(cc=117, range=(0, 127), curve=CurveType.EXPONENTIAL, name="Portamento Time Alt"),
                 "hold_pedal": CCParameter(cc=64, range=(0, 127), curve=CurveType.STEPPED, steps=2, name="Hold Pedal"),
                 "reverb_send": CCParameter(cc=91, range=(0, 127), curve=CurveType.LINEAR, name="Reverb Send Level"),
                 
@@ -327,13 +327,13 @@ class CCProfileRegistry:
                 
                 # DCO (Oscillator) Section
                 "dco1_range": CCParameter(cc=20, range=(0, 127), curve=CurveType.STEPPED, steps=8, name="DCO-1 Range"),
-                "dco1_range_alt": CCParameter(cc=47, range=(0, 127), curve=CurveType.STEPPED, steps=8, name="DCO-1 Range Alt"),
+                # "dco1_range_alt": CCParameter(cc=47, range=(0, 127), curve=CurveType.STEPPED, steps=8, name="DCO-1 Range Alt"),
                 "dco1_waveform": CCParameter(cc=46, range=(0, 127), curve=CurveType.STEPPED, steps=4, name="DCO-1 Waveform"),
                 "dco1_lfo": CCParameter(cc=26, range=(0, 127), curve=CurveType.LINEAR, name="DCO-1 LFO Amount"),
                 "dco_envelope_mode": CCParameter(cc=60, range=(0, 127), curve=CurveType.STEPPED, steps=3, name="DCO Envelope Mode"),
                 
                 "dco2_waveform": CCParameter(cc=61, range=(0, 127), curve=CurveType.STEPPED, steps=4, name="DCO-2 Waveform"),
-                "dco2_range": CCParameter(cc=62, range=(0, 127), curve=CurveType.STEPPED, steps=8, name="DCO-2 Range"),
+                # "dco2_range": CCParameter(cc=62, range=(0, 127), curve=CurveType.STEPPED, steps=8, name="DCO-2 Range"),
                 "dco2_lfo": CCParameter(cc=25, range=(0, 127), curve=CurveType.LINEAR, name="DCO-2 LFO Amount"),
                 "dco2_envelope": CCParameter(cc=63, range=(0, 127), curve=CurveType.LINEAR, name="DCO-2 Envelope Amount"),
                 
@@ -356,8 +356,8 @@ class CCProfileRegistry:
                 "envelope2_key_follow": CCParameter(cc=105, range=(0, 127), curve=CurveType.LINEAR, name="Envelope 2 Key Follow"),
                 
                 # Amplifier Section
-                "amp_envelope_mode": CCParameter(cc=109, range=(0, 127), curve=CurveType.STEPPED, steps=3, name="Amp Envelope Mode"),
-                "amp_level": CCParameter(cc=110, range=(0, 127), curve=CurveType.LINEAR, name="Amp Level"),
+                # "amp_envelope_mode": CCParameter(cc=109, range=(0, 127), curve=CurveType.STEPPED, steps=3, name="Amp Envelope Mode"),
+                # "amp_level": CCParameter(cc=110, range=(0, 127), curve=CurveType.LINEAR, name="Amp Level"),
                 
                 # Performance Controls
                 "bend_pitch": CCParameter(cc=41, range=(0, 127), curve=CurveType.LINEAR, name="Pitch Bend Range"),
