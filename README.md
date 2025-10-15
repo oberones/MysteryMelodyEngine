@@ -227,10 +227,10 @@ Mutation Engine (Idle-Aware) → Parameter Changes
 **Default HID Joystick Mapping**:
 ```yaml
 joystick_mapping:
-  up: "osc_a"       # Maps to MIDI CC 50
-  down: "osc_b"     # Maps to MIDI CC 51
-  left: "mod_a"     # Maps to MIDI CC 52
-  right: "mod_b"    # Maps to MIDI CC 53
+  up: "tempo_up"         # Maps to MIDI CC 50 - Increase tempo by 5 BPM
+  down: "tempo_down"     # Maps to MIDI CC 51 - Decrease tempo by 5 BPM
+  left: "direction_left" # Maps to MIDI CC 52 - Previous direction pattern
+  right: "direction_right" # Maps to MIDI CC 53 - Next direction pattern
 ```
 
 **Default HID Button Mapping**:
@@ -372,10 +372,10 @@ hid:
     1: "trigger_step"    # Button 1 → Note 61
     # ... continues for buttons 2-9
   joystick_mapping:
-    up: "osc_a"         # Joystick Up → CC 50
-    down: "osc_b"       # Joystick Down → CC 51
-    left: "mod_a"       # Joystick Left → CC 52
-    right: "mod_b"      # Joystick Right → CC 53
+    up: "tempo_up"         # Joystick Up → Increase tempo by 5 BPM
+    down: "tempo_down"     # Joystick Down → Decrease tempo by 5 BPM
+    left: "direction_left" # Joystick Left → Previous direction pattern
+    right: "direction_right" # Joystick Right → Next direction pattern
 
 # MIDI Input Configuration (Teensy potentiometers + switches)
 midi:

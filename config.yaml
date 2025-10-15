@@ -33,10 +33,10 @@ hid:
     8: "trigger_step"    # Button 8 -> trigger_step (maps to MIDI note 68)
     9: "trigger_step"    # Button 9 -> trigger_step (maps to MIDI note 69)
   joystick_mapping:
-    up: "osc_a"         # Joystick Up -> osc_a (maps to MIDI CC 50)
-    down: "osc_b"       # Joystick Down -> osc_b (maps to MIDI CC 51)
-    left: "mod_a"       # Joystick Left -> mod_a (maps to MIDI CC 52)  
-    right: "mod_b"      # Joystick Right -> mod_b (maps to MIDI CC 53)
+    up: "tempo_up"         # Joystick Up -> increase tempo (maps to MIDI CC 50)
+    down: "tempo_down"     # Joystick Down -> decrease tempo (maps to MIDI CC 51)
+    left: "direction_left" # Joystick Left -> previous direction pattern (maps to MIDI CC 52)  
+    right: "direction_right" # Joystick Right -> next direction pattern (maps to MIDI CC 53)
 
 # MIDI Input Mapping (from Teensy - potentiometers and switches only now)
 mapping:
@@ -50,6 +50,11 @@ mapping:
     "24": eg_release         # K4 -> NTS-1 EG Release (CC 19)
     "25": reverb_mix         # K5 -> NTS-1 Reverb Mix (CC 36)
     "26": delay_mix          # K6 -> NTS-1 Delay Mix (CC 33)
+    # Joystick controls (now managed by HID, but CC mapping kept for compatibility)
+    "50": tempo_up           # Joystick Up -> tempo increase  
+    "51": tempo_down         # Joystick Down -> tempo decrease
+    "52": direction_left     # Joystick Left -> previous direction pattern
+    "53": direction_right    # Joystick Right -> next direction pattern
     # No joystick mappings - now handled by HID
     "60": osc_type           # S1 -> NTS-1 OSC Type (CC 53)
     "61": filter_type        # S2 -> NTS-1 Filter Type (CC 42)

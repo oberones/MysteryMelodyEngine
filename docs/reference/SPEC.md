@@ -39,7 +39,7 @@ Spare Pins Freed: D12, D13 (reserved future features)
 |---------|-----------|-------------------------|
 | Buttons B1–B10 | NoteOn/NoteOff | Notes 60–69, fixed velocity 100, proper NoteOff (velocity 0) |
 | Pots K1–K6 | ControlChange | CC 20–25, 0–127 after smoothing & deadband (≥2) |
-| Joystick U/D/L/R | ControlChange | CC 50–53, single 127 pulse per actuation (no trailing 0) |
+| Joystick U/D/L/R | ControlChange | CC 50–53, single 127 pulse per actuation (no trailing 0) - U/D=tempo, L/R=direction |
 | Switches S1–S3 | ControlChange | CC 60–62, 127 on ON, 0 on OFF |
 | Panic (future) | ControlChange or SysEx | TBD (deferred) |
 

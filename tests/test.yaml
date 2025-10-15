@@ -13,10 +13,10 @@ mapping:
     "23": swing
     "24": density
     "25": master_volume
-    "50": sequence_length
-    "51": scale_select
-    "52": chaos_lock
-    "53": reserved
+    "50": tempo_up           # Joystick Up -> tempo increase  
+    "51": tempo_down         # Joystick Down -> tempo decrease
+    "52": direction_left     # Joystick Left -> previous direction pattern
+    "53": direction_right    # Joystick Right -> next direction pattern
     "60": mode
     "61": palette
     "62": drift

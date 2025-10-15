@@ -33,11 +33,11 @@ mapping:
     "25": reverb_mix         # K5 -> Reverb Mix (CC 36)
     "26": delay_mix          # K6 -> Delay Mix (CC 33)
     
-    # Joystick controls
-    "50": osc_a              # Joystick Up -> OSC A (CC 54)
-    "51": osc_b              # Joystick Down -> OSC B (CC 55)
-    "52": mod_a              # Joystick Left -> MOD A (CC 28)
-    "53": mod_b              # Joystick Right -> MOD B (CC 29)
+    # Joystick controls - updated for tempo and direction control
+    "50": tempo_up           # Joystick Up -> tempo increase  
+    "51": tempo_down         # Joystick Down -> tempo decrease
+    "52": direction_left     # Joystick Left -> previous direction pattern
+    "53": direction_right    # Joystick Right -> next direction pattern
     
     # Switches for stepped parameters
     "60": osc_type           # S1 -> OSC Type (CC 53)

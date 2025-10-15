@@ -62,10 +62,10 @@ class HidConfig(BaseModel):
     device_name: str = "Generic USB Joystick"
     button_mapping: Dict[int, str] = Field(default_factory=lambda: {i: "trigger_step" for i in range(10)})
     joystick_mapping: Dict[str, str] = Field(default_factory=lambda: {
-        "up": "osc_a",
-        "down": "osc_b", 
-        "left": "mod_a",
-        "right": "mod_b"
+        "up": "tempo_up",
+        "down": "tempo_down", 
+        "left": "direction_left",
+        "right": "direction_right"
     })
 
 class ApiConfig(BaseModel):

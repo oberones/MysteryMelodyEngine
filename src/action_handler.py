@@ -63,6 +63,11 @@ class ActionHandler:
             'mode': self._handle_mode,
             'palette': self._handle_palette,
             'drift': self._handle_drift,
+            # Joystick control actions
+            'tempo_up': self._handle_tempo_up,
+            'tempo_down': self._handle_tempo_down,
+            'direction_left': self._handle_direction_left,
+            'direction_right': self._handle_direction_right,
             # API-specific actions
             'set_direction_pattern': self._handle_set_direction_pattern,
             'set_step_pattern': self._handle_set_step_pattern,
@@ -368,6 +373,52 @@ class ActionHandler:
                     log.warning("Sequencer does not support step patterns")
             except Exception as e:
                 log.error(f"Failed to set step pattern '{event.value}': {e}")
+    
+    def _handle_tempo_up(self, event: SemanticEvent):
+        """Handle tempo increase (Joystick Up)."""
+        if event.value is not None and event.value > 0:  # Only respond to press (127), not release (0)
+            current_bpm = self.state.get('bpm', 120.0)
+            # Increase BPM by 5 BPM steps
+            new_bpm = min(200.0, current_bpm + 5.0)
+            self.state.set('bpm', new_bpm, source='joystick')
+            log.info(f"tempo_increased from={current_bpm:.1f} to={new_bpm:.1f}")
+    
+    def _handle_tempo_down(self, event: SemanticEvent):
+        """Handle tempo decrease (Joystick Down)."""
+        if event.value is not None and event.value > 0:  # Only respond to press (127), not release (0)
+            current_bpm = self.state.get('bpm', 120.0)
+            # Decrease BPM by 5 BPM steps
+            new_bpm = max(60.0, current_bpm - 5.0)
+            self.state.set('bpm', new_bpm, source='joystick')
+            log.info(f"tempo_decreased from={current_bpm:.1f} to={new_bpm:.1f}")
+    
+    def _handle_direction_left(self, event: SemanticEvent):
+        """Handle direction change left (Joystick Left) - previous direction pattern."""
+        if event.value is not None and event.value > 0 and self.sequencer:  # Only respond to press (127)
+            direction_patterns = ['forward', 'backward', 'ping_pong', 'random', 'fugue', 'song']
+            current_pattern = self.state.get('direction_pattern', 'forward')
+            try:
+                current_index = direction_patterns.index(current_pattern)
+                new_index = (current_index - 1) % len(direction_patterns)
+                new_pattern = direction_patterns[new_index]
+                self.sequencer.set_direction_pattern(new_pattern)
+                log.info(f"direction_pattern_changed from={current_pattern} to={new_pattern} via_joystick_left")
+            except (ValueError, AttributeError) as e:
+                log.warning(f"Failed to change direction pattern: {e}")
+    
+    def _handle_direction_right(self, event: SemanticEvent):
+        """Handle direction change right (Joystick Right) - next direction pattern."""
+        if event.value is not None and event.value > 0 and self.sequencer:  # Only respond to press (127)
+            direction_patterns = ['forward', 'backward', 'ping_pong', 'random', 'fugue', 'song']
+            current_pattern = self.state.get('direction_pattern', 'forward')
+            try:
+                current_index = direction_patterns.index(current_pattern)
+                new_index = (current_index + 1) % len(direction_patterns)
+                new_pattern = direction_patterns[new_index]
+                self.sequencer.set_direction_pattern(new_pattern)
+                log.info(f"direction_pattern_changed from={current_pattern} to={new_pattern} via_joystick_right")
+            except (ValueError, AttributeError) as e:
+                log.warning(f"Failed to change direction pattern: {e}")
     
     def _handle_reload_cc_profile(self, event: SemanticEvent):
         """Handle reloading CC profile via API."""
